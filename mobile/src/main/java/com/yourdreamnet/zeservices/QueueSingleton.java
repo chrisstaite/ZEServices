@@ -9,7 +9,7 @@ import com.android.volley.toolbox.BasicNetwork;
 import com.android.volley.toolbox.DiskBasedCache;
 import com.android.volley.toolbox.HurlStack;
 
-class QueueSingleton {
+public class QueueSingleton {
 
     private static QueueSingleton mSingleton = null;
     private RequestQueue mRequestQueue;
@@ -28,7 +28,7 @@ class QueueSingleton {
         return mSingleton;
     }
 
-    static RequestQueue getQueue(Context context) {
+    public static RequestQueue getQueue(Context context) {
         return getSingleton(context).mRequestQueue;
     }
 

@@ -27,8 +27,7 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             Fragment vinFragment = VinSelectFragment.newInstance();
             Bundle arguments = new Bundle();
-            arguments.putString("current", mAuthenticatedApi.getCurrentVin());
-            arguments.putStringArray("available", mAuthenticatedApi.getAvailableVins());
+            arguments.putParcelable("api", mAuthenticatedApi);
             vinFragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.container, vinFragment)

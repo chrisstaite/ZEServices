@@ -7,8 +7,10 @@ import android.util.Log;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
@@ -47,12 +49,14 @@ public class ZEServicesAPI {
     public static class AuthenticatedAPI implements Parcelable {
 
         private String mAuthenticationToken;
+        private String mRefreshToken;
         private String mXsrfToken;
         private String mCurrentVin;
         private String[] mAvailableVins;
 
-        AuthenticatedAPI(String authenticationToken, String xsrfToken, String currentVin, String[] availableVins) {
+        AuthenticatedAPI(String authenticationToken, String refreshToken, String xsrfToken, String currentVin, String[] availableVins) {
             mAuthenticationToken = authenticationToken;
+            mRefreshToken = refreshToken;
             mXsrfToken = xsrfToken;
             mCurrentVin = currentVin;
             mAvailableVins = availableVins;
@@ -60,6 +64,7 @@ public class ZEServicesAPI {
 
         private AuthenticatedAPI(Parcel in) {
             mAuthenticationToken = in.readString();
+            mRefreshToken = in.readString();
             mXsrfToken = in.readString();
             mCurrentVin = in.readString();
             mAvailableVins = in.createStringArray();
@@ -86,7 +91,7 @@ public class ZEServicesAPI {
             byte[] decoded = Base64.decode(parts[1], Base64.DEFAULT);
             try {
                 JSONObject parsed = new JSONObject(new String(decoded, "UTF-8"));
-                return new Date().after(new Date(parsed.getLong("exp")));
+                return new Date().after(new Date(parsed.getLong("exp") * 1000));
             } catch (UnsupportedEncodingException e) {
                 Log.e("ZEServicesAPI", "Unable to parse token as UTF-8", e);
             } catch (JSONException e) {
@@ -108,7 +113,7 @@ public class ZEServicesAPI {
                 response -> {
                     try {
                         mAuthenticationToken = response.getString("token");
-                        mXsrfToken = response.getString("xsrfToken");
+                        // TODO: Is the cookie updated here too?
                         result.onResponse(AuthenticatedAPI.this);
                     } catch (JSONException e) {
                         Log.e("ZEServicesAPI", "Unable to parse JSON response", e);
@@ -116,10 +121,21 @@ public class ZEServicesAPI {
                     }
                 },
                 error -> {
-                    Log.e("ZEServicesAPI", "Bad response to login", error);
+                    Log.e("ZEServicesAPI", "Bad response to refresh", error);
                     result.onErrorResponse(error);
                 }
-            );
+            ) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String>  params = new HashMap<>();
+                    params.put("X-XSRF-TOKEN", mXsrfToken);
+                    params.put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36");
+                    params.put("Referer", "https://www.services.renault-ze.com/user/login");
+                    params.put("Origin", "https://www.services.renault-ze.com");
+                    params.put("Cookie", mRefreshToken);
+                    return params;
+                }
+            };
             refreshRequest.setRetryPolicy(new DefaultRetryPolicy(
                 REQUEST_TIMEOUT_MS,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
@@ -145,23 +161,20 @@ public class ZEServicesAPI {
         private Observable<JSONObject> actualDoRequest(RequestQueue queue, String url, Map<String, String> query) {
             final RequestFuture<JSONObject> result = RequestFuture.newFuture();
             final Observable<JSONObject> o = Observable.from(result, Schedulers.io());
-            JSONObject jsonQuery = null;
-            if (query != null) {
-                jsonQuery = new JSONObject(query);
-            }
             final JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.POST,
+                query == null ? Request.Method.GET : Request.Method.POST,
                 HOST + url,
-                jsonQuery,
+                query == null ? null : new JSONObject(query),
                 result,
                 result
             ) {
                 @Override
-                public Map<String, String> getHeaders() throws AuthFailureError {
-                    Map<String, String>  params = super.getHeaders();
-                    params.put("X-XSRF-TOKEN", mXsrfToken);
+                public Map<String, String> getHeaders() {
+                    Map<String, String>  params = new HashMap<>();
                     params.put("Authorization", "Bearer " + mAuthenticationToken);
-                    params.put("User-Agent", "");
+                    params.put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36");
+                    params.put("Referer", "https://www.services.renault-ze.com/user/login");
+                    params.put("Origin", "https://www.services.renault-ze.com");
                     return params;
                 }
             };
@@ -202,7 +215,7 @@ public class ZEServicesAPI {
             return doVinRequest(queue, vin, URL, null);
         }
 
-        private Observable<JSONObject> setActive(RequestQueue queue, String vin) {
+        public Observable<JSONObject> setActive(RequestQueue queue, String vin) {
             final String URL = "/api/vehicle";
             final Map<String, String> request = new HashMap<>();
             request.put("active_vehicle", vin);
@@ -252,6 +265,7 @@ public class ZEServicesAPI {
         @Override
         public void writeToParcel(Parcel parcel, int flags) {
             parcel.writeString(mAuthenticationToken);
+            parcel.writeString(mRefreshToken);
             parcel.writeString(mXsrfToken);
             parcel.writeString(mCurrentVin);
             parcel.writeStringArray(mAvailableVins);
@@ -289,11 +303,12 @@ public class ZEServicesAPI {
                     JSONObject currentVehicle = user.getJSONObject("vehicle_details");
                     JSONArray availableVehicles = user.getJSONArray("associated_vehicles");
                     String currentVIN = currentVehicle.getString("VIN");
+                    String refreshToken = response.getString("refreshToken");
                     String[] availableVINs = new String[availableVehicles.length()];
                     for (int i = 0; i < availableVehicles.length(); i++) {
                         availableVINs[i] = availableVehicles.getJSONObject(i).getString("VIN");
                     }
-                    result.onResponse(new AuthenticatedAPI(authenticationToken, xsrfToken, currentVIN, availableVINs));
+                    result.onResponse(new AuthenticatedAPI(authenticationToken, refreshToken, xsrfToken, currentVIN, availableVINs));
                 } catch (JSONException e) {
                     Log.e("ZEServicesAPI", "Unable to parse JSON response", e);
                     result.onErrorResponse(new VolleyError("Unable to parse response", e));
@@ -302,7 +317,33 @@ public class ZEServicesAPI {
                 result.onErrorResponse(error);
                 Log.e("ZEServicesAPI", "Bad response to login", error);
             }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String>  params = new HashMap<>();
+                params.put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36");
+                params.put("Referer", "https://www.services.renault-ze.com/user/login");
+                params.put("Origin", "https://www.services.renault-ze.com");
+                return params;
+            }
+
+            @Override
+            protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
+                Map headers = response.headers;
+                String cookie = (String) headers.get("Set-Cookie");
+                Log.d("ZEServicesAPI", "Got cookie " + cookie);
+                Response<JSONObject> result = super.parseNetworkResponse(response);
+                if (result.isSuccess()) {
+                    try {
+                        // TODO: Check the expiry of the cookie
+                        result.result.put("refreshToken", cookie.split(";")[0]);
+                    } catch (JSONException e) {
+                        Log.e("ZEServicesAPI", "Unable to add token to response", e);
+                    }
+                }
+                return result;
+            }
+        };
 
         authenticationRequest.setRetryPolicy(new DefaultRetryPolicy(
             REQUEST_TIMEOUT_MS,
