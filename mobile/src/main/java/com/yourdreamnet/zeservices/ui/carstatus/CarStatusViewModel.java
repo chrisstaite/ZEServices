@@ -10,6 +10,8 @@ import java.util.Date;
 
 class CarStatusViewModel extends ViewModel {
 
+    private static final double KM_IN_MILE = 0.621371;
+
     private boolean mCharging;
     private boolean mPluggedIn;
     private int mChargeLevel;
@@ -53,7 +55,7 @@ class CarStatusViewModel extends ViewModel {
 
     int getRange() {
         if (mRangeMiles) {
-            return (int) Math.round(mRangeKm * 0.621371);
+            return (int) Math.round(mRangeKm * KM_IN_MILE);
         }
         return mRangeKm;
     }

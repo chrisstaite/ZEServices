@@ -95,6 +95,7 @@ public class LoginActivity extends AppCompatActivity {
                 getAuthenticated(QueueSingleton.getQueue(this)).
                 subscribe(
                     api -> runOnUiThread(() -> {
+                        showProgress(false);
                         Intent startIntent = new Intent(this, MainActivity.class);
                         startIntent.putExtra("api", api);
                         startActivity(startIntent);
@@ -141,5 +142,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
 }
 
