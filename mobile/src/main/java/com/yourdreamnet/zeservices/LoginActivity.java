@@ -101,10 +101,10 @@ public class LoginActivity extends AppCompatActivity {
                     }),
                     error -> runOnUiThread(() -> {
                         Log.e("LoginActivity", "Unable to authenticate", error);
+                        showProgress(false);
                         mEmailView.setError(getString(R.string.error_invalid_email));
                         mEmailView.requestFocus();
-                    }),
-                    () -> runOnUiThread(() -> showProgress(false))
+                    })
                 );
         }
     }

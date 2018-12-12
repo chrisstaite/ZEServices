@@ -5,12 +5,15 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.yourdreamnet.zeservices.R;
 import com.yourdreamnet.zeservices.ZEServicesAPI;
+
+import java.util.Arrays;
 
 public class VinSelectFragment extends Fragment {
 
@@ -33,6 +36,9 @@ public class VinSelectFragment extends Fragment {
             mCurrentVin = "";
             mAvailableVins = new String[0];
         }
+
+        Log.d("VinSelect", "Current VIN: " + mCurrentVin);
+        Log.d("VinSelect", "Available VINs: " + Arrays.toString(mAvailableVins));
     }
 
     @Nullable

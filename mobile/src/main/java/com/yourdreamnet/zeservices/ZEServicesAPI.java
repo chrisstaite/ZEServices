@@ -6,6 +6,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
@@ -27,6 +28,9 @@ import rx.subjects.AsyncSubject;
 
 public class ZEServicesAPI {
 
+    // Requests can take some time, so let them take up to 30 seconds
+    private static final int REQUEST_TIMEOUT_MS = 30000;
+    // The base URL for the ZE Services API
     private static final String HOST = "https://www.services.renault-ze.com";
 
     private String mUsername;
@@ -116,6 +120,11 @@ public class ZEServicesAPI {
                     result.onErrorResponse(error);
                 }
             );
+            refreshRequest.setRetryPolicy(new DefaultRetryPolicy(
+                REQUEST_TIMEOUT_MS,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            ));
             result.setRequest(refreshRequest);
             queue.add(refreshRequest);
             return o;
@@ -156,6 +165,11 @@ public class ZEServicesAPI {
                     return params;
                 }
             };
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                REQUEST_TIMEOUT_MS,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            ));
             result.setRequest(request);
             queue.add(request);
             return o;
@@ -262,34 +276,39 @@ public class ZEServicesAPI {
         final Map<String, String> request = new HashMap<>();
         request.put("username", mUsername);
         request.put("password", mPassword);
-        final JSONObject jsonRequest = new JSONObject(request);
 
         final JsonObjectRequest authenticationRequest = new JsonObjectRequest(
             Request.Method.POST,
             URL,
-            jsonRequest,
-                response -> {
-                    try {
-                        String authenticationToken = response.getString("token");
-                        String xsrfToken = response.getString("xsrfToken");
-                        JSONObject user = response.getJSONObject("user");
-                        JSONObject currentVehicle = user.getJSONObject("vehicle_details");
-                        JSONArray availableVehicles = user.getJSONArray("associated_vehicles");
-                        String currentVIN = currentVehicle.getString("VIN");
-                        String[] availableVINs = new String[availableVehicles.length()];
-                        for (int i = 0; i < availableVehicles.length(); i++) {
-                            availableVINs[i] = availableVehicles.getJSONObject(i).getString("VIN");
-                        }
-                        result.onResponse(new AuthenticatedAPI(authenticationToken, xsrfToken, currentVIN, availableVINs));
-                    } catch (JSONException e) {
-                        Log.e("ZEServicesAPI", "Unable to parse JSON response", e);
-                        result.onErrorResponse(new VolleyError("Unable to parse response", e));
+            new JSONObject(request),
+            response -> {
+                try {
+                    String authenticationToken = response.getString("token");
+                    String xsrfToken = response.getString("xsrfToken");
+                    JSONObject user = response.getJSONObject("user");
+                    JSONObject currentVehicle = user.getJSONObject("vehicle_details");
+                    JSONArray availableVehicles = user.getJSONArray("associated_vehicles");
+                    String currentVIN = currentVehicle.getString("VIN");
+                    String[] availableVINs = new String[availableVehicles.length()];
+                    for (int i = 0; i < availableVehicles.length(); i++) {
+                        availableVINs[i] = availableVehicles.getJSONObject(i).getString("VIN");
                     }
-                }, error -> {
+                    result.onResponse(new AuthenticatedAPI(authenticationToken, xsrfToken, currentVIN, availableVINs));
+                } catch (JSONException e) {
+                    Log.e("ZEServicesAPI", "Unable to parse JSON response", e);
+                    result.onErrorResponse(new VolleyError("Unable to parse response", e));
+                }
+            }, error -> {
                 result.onErrorResponse(error);
                 Log.e("ZEServicesAPI", "Bad response to login", error);
             }
         );
+
+        authenticationRequest.setRetryPolicy(new DefaultRetryPolicy(
+            REQUEST_TIMEOUT_MS,
+            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        ));
 
         result.setRequest(authenticationRequest);
         queue.add(authenticationRequest);
