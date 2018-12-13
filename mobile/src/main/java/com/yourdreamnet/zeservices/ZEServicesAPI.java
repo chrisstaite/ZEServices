@@ -161,7 +161,7 @@ public class ZEServicesAPI {
             final RequestFuture<JSONObject> result = RequestFuture.newFuture();
             final Observable<JSONObject> o = Observable.from(result, Schedulers.io());
             final JsonObjectRequest request = new JsonObjectRequest(
-                post ? Request.Method.GET : Request.Method.POST,
+                post ? Request.Method.POST : Request.Method.GET,
                 HOST + url,
                 query == null ? null : new JSONObject(query),
                 result,
