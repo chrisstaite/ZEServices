@@ -145,23 +145,23 @@ public class ZEServicesAPI {
             return o;
         }
 
-        private Observable<JSONObject> doRequest(final RequestQueue queue, final String url, final Map<String, String> query) {
+        private Observable<JSONObject> doRequest(final RequestQueue queue, final String url, final Map<String, String> query, boolean post) {
             if (hasExpired()) {
                 final AsyncSubject<JSONObject> o = AsyncSubject.create();
                 refresh(queue).subscribe(
-                    api -> api.actualDoRequest(queue, url, query).subscribe(o),
+                    api -> api.actualDoRequest(queue, url, query, post).subscribe(o),
                     o::onError
                 );
                 return o.asObservable();
             }
-            return actualDoRequest(queue, url, query);
+            return actualDoRequest(queue, url, query, post);
         }
 
-        private Observable<JSONObject> actualDoRequest(RequestQueue queue, String url, Map<String, String> query) {
+        private Observable<JSONObject> actualDoRequest(RequestQueue queue, String url, Map<String, String> query, boolean post) {
             final RequestFuture<JSONObject> result = RequestFuture.newFuture();
             final Observable<JSONObject> o = Observable.from(result, Schedulers.io());
             final JsonObjectRequest request = new JsonObjectRequest(
-                query == null ? Request.Method.GET : Request.Method.POST,
+                post ? Request.Method.GET : Request.Method.POST,
                 HOST + url,
                 query == null ? null : new JSONObject(query),
                 result,
@@ -187,9 +187,9 @@ public class ZEServicesAPI {
             return o;
         }
 
-        private Observable<JSONObject> doVinRequest(final RequestQueue queue, final String vin, final String url, final Map<String, String> request) {
+        private Observable<JSONObject> doVinRequest(final RequestQueue queue, final String vin, final String url, final Map<String, String> request, boolean post) {
             if (vin.equals(mCurrentVin)) {
-                return doRequest(queue, url, request);
+                return doRequest(queue, url, request, post);
             } else {
                 // Change to the new VIN and perform the request in a separate thread
                 final AsyncSubject<JSONObject> o = AsyncSubject.create();
@@ -198,11 +198,11 @@ public class ZEServicesAPI {
                     mCurrentVin = vin;
                     if (hasExpired()) {
                         refresh(queue).subscribe(
-                            api -> doRequest(queue, url, request).subscribe(o),
+                            api -> doRequest(queue, url, request, post).subscribe(o),
                             o::onError
                         );
                     } else {
-                        doRequest(queue, url, request).subscribe(o);
+                        doRequest(queue, url, request, post).subscribe(o);
                     }
                 }, o::onError);
                 return o.asObservable();
@@ -211,41 +211,41 @@ public class ZEServicesAPI {
 
         public Observable<JSONObject> getBattery(RequestQueue queue, String vin) {
             final String URL = "/api/vehicle/" + vin + "/battery";
-            return doVinRequest(queue, vin, URL, null);
+            return doVinRequest(queue, vin, URL, null, false);
         }
 
         public Observable<JSONObject> setActive(RequestQueue queue, String vin) {
             final String URL = "/api/vehicle";
             final Map<String, String> request = new HashMap<>();
             request.put("active_vehicle", vin);
-            return doRequest(queue, URL, request);
+            return doRequest(queue, URL, request, true);
         }
 
         public Observable<JSONObject> getChargeSiblings(RequestQueue queue, String vin) {
             final String URL = "/api/vehicle/" + vin + "/charge/siblings";
-            return doVinRequest(queue, vin, URL, null);
+            return doVinRequest(queue, vin, URL, null, false);
         }
 
         public Observable<JSONObject> startPrecondition(RequestQueue queue, String vin) {
             final String URL = "/api/vehicle/" + vin + "/air-conditioning";
-            return doVinRequest(queue, vin, URL, null);
+            return doVinRequest(queue, vin, URL, null, true);
         }
 
         public Observable<JSONObject> schedulePrecondition(RequestQueue queue, String vin, String startTime) {
             final String URL = "/api/vehicle/" + vin + "/air-conditioning/scheduler";
             final Map<String, String> request = new HashMap<>();
             request.put("start", startTime);
-            return doVinRequest(queue, vin, URL, request);
+            return doVinRequest(queue, vin, URL, request, true);
         }
 
         public Observable<JSONObject> preconditionStatus(RequestQueue queue, String vin) {
             final String URL = "/api/vehicle/" + vin + "/air-conditioning/last";
-            return doVinRequest(queue, vin, URL, null);
+            return doVinRequest(queue, vin, URL, null, false);
         }
 
         public Observable<JSONObject> startCharge(RequestQueue queue, String vin) {
             final String URL = "/api/vehicle/" + vin + "/charge";
-            return doVinRequest(queue, vin, URL, null);
+            return doVinRequest(queue, vin, URL, null, true);
         }
 
         public String getCurrentVin() {

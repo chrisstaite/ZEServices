@@ -4,8 +4,10 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -81,6 +83,14 @@ public class LoginActivity extends AppCompatActivity {
     public void onStart() {
         super.onStart();
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            loadLogin();
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void loadLogin() {
+
         try {
             SharedPreferences sharedPref = getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE);
             byte[] emailIv = Base64.decode(sharedPref.getString(EMAIL_IV_KEY, null), Base64.DEFAULT);
@@ -117,6 +127,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void saveLogin(String email, String password) {
         try {
             KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
@@ -216,7 +227,9 @@ public class LoginActivity extends AppCompatActivity {
             subscribe(
                 api -> runOnUiThread(() -> {
                     showProgress(false);
-                    saveLogin(email, password);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        saveLogin(email, password);
+                    }
                     Intent startIntent = new Intent(this, MainActivity.class);
                     startIntent.putExtra("api", api);
                     startActivity(startIntent);
