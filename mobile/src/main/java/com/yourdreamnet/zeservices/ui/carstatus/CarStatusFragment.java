@@ -69,21 +69,24 @@ public class CarStatusFragment extends Fragment {
             }
         );
 
-        Button toggle = getView().findViewById(R.id.rangeToggle);
+        Button toggle = Objects.requireNonNull(getView()).findViewById(R.id.rangeToggle);
         toggle.setText(mViewModel.isRangeMiles() ? R.string.miles : R.string.km);
         toggle.setOnClickListener(this::toggleRange);
+
+        Button startCharging = getView().findViewById(R.id.startCharge);
+        startCharging.setOnClickListener(this::startCharging);
     }
 
     private void updateView() {
         DateFormat dateFormat = android.text.format.DateFormat.getLongDateFormat(getContext());
-        String lastUpdated = dateFormat.format(mViewModel.getLastUpdate());
+        DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(getContext());
+        String lastUpdated = timeFormat.format(mViewModel.getLastUpdate()) + " " + dateFormat.format(mViewModel.getLastUpdate());
         TextView lastUpdatedView = Objects.requireNonNull(getView()).findViewById(R.id.lastUpdated);
         lastUpdatedView.setText(lastUpdated);
 
         ProgressBar progressBar = getView().findViewById(R.id.chargeLevel);
         TextView percentageView = getView().findViewById(R.id.chargePercentage);
         int level = mViewModel.getChargeLevel();
-        progressBar.setMax(100);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             progressBar.setProgress(level, true);
         } else {
@@ -113,14 +116,32 @@ public class CarStatusFragment extends Fragment {
 
         TextView range = getView().findViewById(R.id.range);
         range.setText(String.valueOf(mViewModel.getRange()));
+
+        Button startCharging = getView().findViewById(R.id.startCharge);
+        startCharging.setVisibility(
+            mViewModel.isPluggedIn() && !mViewModel.isCharging() ? View.VISIBLE : View.INVISIBLE
+        );
     }
 
     void toggleRange(View button) {
         boolean miles = !mViewModel.isRangeMiles();
         ((Button) button).setText(miles ? R.string.miles : R.string.km);
         mViewModel.setRangeMiles(miles);
-        TextView range = getView().findViewById(R.id.range);
+        TextView range = Objects.requireNonNull(getView()).findViewById(R.id.range);
         range.setText(String.valueOf(mViewModel.getRange()));
+    }
+
+    void startCharging(View button) {
+        button.setVisibility(View.INVISIBLE);
+        mAuthenticatedApi.startCharge(QueueSingleton.getQueue(getContext()), mVin).subscribe(
+            response -> {
+                mViewModel.setCharging(true);
+                Objects.requireNonNull(getActivity()).runOnUiThread(this::updateView);
+            },
+            error -> Objects.requireNonNull(getActivity()).runOnUiThread(
+                () -> button.setVisibility(View.VISIBLE)
+            )
+        );
     }
 
 }

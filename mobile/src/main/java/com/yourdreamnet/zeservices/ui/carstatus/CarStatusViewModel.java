@@ -33,6 +33,10 @@ class CarStatusViewModel extends ViewModel {
         }
     }
 
+    void setCharging(boolean charging) {
+        mCharging = charging;
+    }
+
     void setRangeMiles(boolean miles) {
         mRangeMiles = miles;
     }

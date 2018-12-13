@@ -5,7 +5,6 @@ import android.os.Parcelable;
 import android.util.Base64;
 import android.util.Log;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;

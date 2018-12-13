@@ -17,4 +17,5 @@
     <string name="charging_percentage">%s%%</string>
     <string name="km">km</string>
     <string name="miles">miles</string>
+    <string name="startCharge">Start Charging</string>
 </resources>

@@ -3,10 +3,14 @@ package com.yourdreamnet.zeservices;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.support.v7.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -14,10 +18,35 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.UnrecoverableEntryException;
+import java.security.cert.CertificateException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+
 /**
  * A login screen that offers login via email/password.
  */
 public class LoginActivity extends AppCompatActivity {
+
+    private static final String PREFERENCE_FILE = "authentication";
+    private static final String EMAIL_KEY = "email";
+    private static final String EMAIL_IV_KEY = "email_iv";
+    private static final String PASSWORD_KEY = "password";
+    private static final String PASSWORD_IV_KEY = "password_iv";
+    private static final String LOGIN_KEY = "loginKey";
 
     // UI references.
     private AutoCompleteTextView mEmailView;
@@ -46,6 +75,92 @@ public class LoginActivity extends AppCompatActivity {
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        try {
+            SharedPreferences sharedPref = getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE);
+            byte[] emailIv = Base64.decode(sharedPref.getString(EMAIL_IV_KEY, null), Base64.DEFAULT);
+            byte[] emailEncrypted = Base64.decode(sharedPref.getString(EMAIL_KEY, null), Base64.DEFAULT);
+            byte[] passwordIv = Base64.decode(sharedPref.getString(PASSWORD_IV_KEY, null), Base64.DEFAULT);
+            byte[] passwordEncrypted = Base64.decode(sharedPref.getString(PASSWORD_KEY, null), Base64.DEFAULT);
+
+            try {
+                KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+                keyStore.load(null);
+                final KeyStore.SecretKeyEntry secretKeyEntry = (KeyStore.SecretKeyEntry) keyStore
+                        .getEntry(LOGIN_KEY, null);
+                if (secretKeyEntry != null) {
+                    final SecretKey secretKey = secretKeyEntry.getSecretKey();
+                    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                    GCMParameterSpec spec = new GCMParameterSpec(128, emailIv);
+                    cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
+                    final String email = new String(cipher.doFinal(emailEncrypted), "UTF-8");
+                    cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                    spec = new GCMParameterSpec(128, passwordIv);
+                    cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
+                    final String password = new String(cipher.doFinal(passwordEncrypted), "UTF-8");
+                    mEmailView.setText(email);
+                    mPasswordView.setText(password);
+                    if (!email.isEmpty() && !password.isEmpty()) {
+                        login(email, password);
+                    }
+                }
+            } catch (BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException | NoSuchPaddingException | InvalidKeyException | KeyStoreException | UnrecoverableEntryException | CertificateException | IOException | NoSuchAlgorithmException e) {
+                Log.e("LoginActivity", "Unable to load or save the login details", e);
+            }
+        } catch (NullPointerException e) {
+            // At least one of the fields doesn't exist, skip
+        }
+    }
+
+    private void saveLogin(String email, String password) {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            final KeyStore.SecretKeyEntry secretKeyEntry = (KeyStore.SecretKeyEntry) keyStore
+                    .getEntry(LOGIN_KEY, null);
+            final SecretKey secretKey;
+            if (secretKeyEntry == null) {
+                final KeyGenerator keyGenerator = KeyGenerator.getInstance(
+                    KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore"
+                );
+                final KeyGenParameterSpec keyGenParameterSpec = new KeyGenParameterSpec.Builder(
+                            LOGIN_KEY,
+                            KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT
+                        )
+                        .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                        .build();
+                keyGenerator.init(keyGenParameterSpec);
+                secretKey = keyGenerator.generateKey();
+            } else {
+                secretKey = secretKeyEntry.getSecretKey();
+            }
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            byte[] emailIv = cipher.getIV();
+            byte[] emailEncrypted = cipher.doFinal(email.getBytes("UTF-8"));
+
+            cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            byte[] passwordIv = cipher.getIV();
+            byte[] passwordEncrypted = cipher.doFinal(password.getBytes("UTF-8"));
+
+            SharedPreferences sharedPref = getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE);
+            sharedPref.edit().
+                    putString(EMAIL_IV_KEY, Base64.encodeToString(emailIv, Base64.DEFAULT)).
+                    putString(EMAIL_KEY, Base64.encodeToString(emailEncrypted, Base64.DEFAULT)).
+                    putString(PASSWORD_IV_KEY, Base64.encodeToString(passwordIv, Base64.DEFAULT)).
+                    putString(PASSWORD_KEY, Base64.encodeToString(passwordEncrypted, Base64.DEFAULT)).
+                    apply();
+        } catch (BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException | InvalidKeyException | NoSuchProviderException | InvalidAlgorithmParameterException | KeyStoreException | UnrecoverableEntryException | CertificateException | IOException | NoSuchAlgorithmException e) {
+            Log.e("LoginActivity", "Unable to save the login details", e);
+        }
     }
 
     /**
@@ -90,24 +205,29 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            showProgress(true);
-            new ZEServicesAPI(email, password).
-                getAuthenticated(QueueSingleton.getQueue(this)).
-                subscribe(
-                    api -> runOnUiThread(() -> {
-                        showProgress(false);
-                        Intent startIntent = new Intent(this, MainActivity.class);
-                        startIntent.putExtra("api", api);
-                        startActivity(startIntent);
-                    }),
-                    error -> runOnUiThread(() -> {
-                        Log.e("LoginActivity", "Unable to authenticate", error);
-                        showProgress(false);
-                        mEmailView.setError(getString(R.string.error_invalid_email));
-                        mEmailView.requestFocus();
-                    })
-                );
+            login(email, password);
         }
+    }
+
+    private void login(String email, String password) {
+        showProgress(true);
+        new ZEServicesAPI(email, password).
+            getAuthenticated(QueueSingleton.getQueue(this)).
+            subscribe(
+                api -> runOnUiThread(() -> {
+                    showProgress(false);
+                    saveLogin(email, password);
+                    Intent startIntent = new Intent(this, MainActivity.class);
+                    startIntent.putExtra("api", api);
+                    startActivity(startIntent);
+                }),
+                error -> runOnUiThread(() -> {
+                    Log.e("LoginActivity", "Unable to authenticate", error);
+                    showProgress(false);
+                    mEmailView.setError(getString(R.string.error_invalid_email));
+                    mEmailView.requestFocus();
+                })
+            );
     }
 
     private boolean isEmailValid(String email) {
