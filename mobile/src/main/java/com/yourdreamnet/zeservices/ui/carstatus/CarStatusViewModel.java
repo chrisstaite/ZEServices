@@ -8,7 +8,7 @@ import org.json.JSONObject;
 
 import java.util.Date;
 
-class CarStatusViewModel extends ViewModel {
+public class CarStatusViewModel extends ViewModel {
 
     private static final double KM_IN_MILE = 0.621371;
 

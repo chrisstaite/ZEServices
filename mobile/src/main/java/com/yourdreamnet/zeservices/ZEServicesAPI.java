@@ -287,7 +287,7 @@ public class ZEServicesAPI {
         final Observable<AuthenticatedAPI> o = Observable.from(result, Schedulers.io());
 
         final Map<String, String> request = new HashMap<>();
-        request.put("username", mUsername);
+        request.put("username", mUsername.toLowerCase());
         request.put("password", mPassword);
 
         final JsonObjectRequest authenticationRequest = new JsonObjectRequest(
