@@ -2,13 +2,13 @@ package com.yourdreamnet.zeservices;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
-import android.support.annotation.RequiresApi;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.RequiresApi;
 
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -41,7 +41,7 @@ import javax.crypto.spec.GCMParameterSpec;
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends Activity {
 
     private static final String PREFERENCE_FILE = "authentication";
     private static final String EMAIL_KEY = "email";
@@ -61,6 +61,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_login);
         // Set up the login form.
         mEmailView = findViewById(R.id.email);

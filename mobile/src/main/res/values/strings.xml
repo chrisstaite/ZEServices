@@ -18,4 +18,12 @@
     <string name="km">km</string>
     <string name="miles">miles</string>
     <string name="startCharge">Start Charging</string>
+    <string name="charge_data">Charge data</string>
+    <string name="air_conditioning">Air conditioning</string>
+    <string name="car_status">Car status</string>
+    <string name="navigation_drawer_open">Choose VIN</string>
+    <string name="navigation_drawer_close">Finished</string>
+    <string name="precondition">Start Precondition</string>
+    <string name="started_condition">Pre-conditioning started</string>
+    <string name="error_conditioning">Error starting conditioning</string>
 </resources>

@@ -1,12 +1,13 @@
 package com.yourdreamnet.zeservices.ui.carstatus;
 
-import android.arch.lifecycle.ViewModel;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
+
+import androidx.lifecycle.ViewModel;
 
 public class CarStatusViewModel extends ViewModel {
 

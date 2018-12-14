@@ -1,13 +1,11 @@
 package com.yourdreamnet.zeservices.ui.carstatus;
 
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.v4.app.Fragment;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +16,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.yourdreamnet.zeservices.LoginActivity;
+import com.yourdreamnet.zeservices.MainActivity;
 import com.yourdreamnet.zeservices.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
 import com.yourdreamnet.zeservices.ZEServicesAPI;
@@ -25,24 +24,19 @@ import com.yourdreamnet.zeservices.ZEServicesAPI;
 import java.text.DateFormat;
 import java.util.Objects;
 
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+
 public class CarStatusFragment extends Fragment {
 
     private CarStatusViewModel mViewModel;
-    private ZEServicesAPI.AuthenticatedAPI mAuthenticatedApi;
-    private String mVin;
 
     public static CarStatusFragment newInstance() {
         return new CarStatusFragment();
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Bundle arguments = getArguments();
-        if (arguments != null) {
-            mAuthenticatedApi = arguments.getParcelable("api");
-            mVin = arguments.getString("vin");
-        }
+    private ZEServicesAPI.AuthenticatedAPI getApi() {
+        return ((MainActivity) getActivity()).getApi();
     }
 
     @Override
@@ -75,7 +69,8 @@ public class CarStatusFragment extends Fragment {
         mViewModel = ViewModelProviders.of(this).get(CarStatusViewModel.class);
 
         setLoading(true);
-        mAuthenticatedApi.getBattery(QueueSingleton.getQueue(), mVin).subscribe(
+        ZEServicesAPI.AuthenticatedAPI api = getApi();
+        api.getBattery(QueueSingleton.getQueue(), api.getCurrentVin()).subscribe(
             batteryData -> Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                 setLoading(false);
                 if (!mViewModel.setBatteryData(batteryData)) {
@@ -147,7 +142,7 @@ public class CarStatusFragment extends Fragment {
         );
     }
 
-    void toggleRange(View button) {
+    private void toggleRange(View button) {
         boolean miles = !mViewModel.isRangeMiles();
         ((Button) button).setText(miles ? R.string.miles : R.string.km);
         mViewModel.setRangeMiles(miles);
@@ -155,9 +150,10 @@ public class CarStatusFragment extends Fragment {
         range.setText(String.valueOf(mViewModel.getRange()));
     }
 
-    void startCharging(View button) {
+    private void startCharging(View button) {
         button.setVisibility(View.INVISIBLE);
-        mAuthenticatedApi.startCharge(QueueSingleton.getQueue(), mVin).subscribe(
+        ZEServicesAPI.AuthenticatedAPI api = getApi();
+        api.startCharge(QueueSingleton.getQueue(), api.getCurrentVin()).subscribe(
             response -> {
                 mViewModel.setCharging(true);
                 Objects.requireNonNull(getActivity()).runOnUiThread(this::updateView);
