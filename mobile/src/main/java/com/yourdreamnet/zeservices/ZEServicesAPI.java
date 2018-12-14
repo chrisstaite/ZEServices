@@ -13,6 +13,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
+import com.android.volley.toolbox.StringRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -157,6 +158,18 @@ public class ZEServicesAPI {
             return actualDoRequest(queue, url, query, post);
         }
 
+        private Observable<String> doRequest(final RequestQueue queue, final String url, boolean post) {
+            if (hasExpired()) {
+                final AsyncSubject<String> o = AsyncSubject.create();
+                refresh(queue).subscribe(
+                        api -> api.actualDoRequest(queue, url, post).subscribe(o),
+                        o::onError
+                );
+                return o.asObservable();
+            }
+            return actualDoRequest(queue, url, post);
+        }
+
         private Observable<JSONObject> actualDoRequest(RequestQueue queue, String url, Map<String, String> query, boolean post) {
             final RequestFuture<JSONObject> result = RequestFuture.newFuture();
             final Observable<JSONObject> o = Observable.from(result, Schedulers.io());
@@ -187,14 +200,42 @@ public class ZEServicesAPI {
             return o;
         }
 
+        private Observable<String> actualDoRequest(RequestQueue queue, String url, boolean post) {
+            final RequestFuture<String> result = RequestFuture.newFuture();
+            final Observable<String> o = Observable.from(result, Schedulers.io());
+            final StringRequest request = new StringRequest(
+                    post ? Request.Method.POST : Request.Method.GET,
+                    HOST + url,
+                    result,
+                    result
+            ) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String>  params = new HashMap<>();
+                    params.put("Authorization", "Bearer " + mAuthenticationToken);
+                    params.put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36");
+                    params.put("Referer", "https://www.services.renault-ze.com/user/login");
+                    params.put("Origin", "https://www.services.renault-ze.com");
+                    return params;
+                }
+            };
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                    REQUEST_TIMEOUT_MS,
+                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            ));
+            result.setRequest(request);
+            queue.add(request);
+            return o;
+        }
+
         private Observable<JSONObject> doVinRequest(final RequestQueue queue, final String vin, final String url, final Map<String, String> request, boolean post) {
             if (vin.equals(mCurrentVin)) {
                 return doRequest(queue, url, request, post);
             } else {
                 // Change to the new VIN and perform the request in a separate thread
                 final AsyncSubject<JSONObject> o = AsyncSubject.create();
-                Observable<JSONObject> active = setActive(queue, vin);
-                active.subscribe(set -> {
+                setActive(queue, vin).subscribe(set -> {
                     mCurrentVin = vin;
                     if (hasExpired()) {
                         refresh(queue).subscribe(
@@ -203,6 +244,27 @@ public class ZEServicesAPI {
                         );
                     } else {
                         doRequest(queue, url, request, post).subscribe(o);
+                    }
+                }, o::onError);
+                return o.asObservable();
+            }
+        }
+
+        private Observable<String> doVinRequest(final RequestQueue queue, final String vin, final String url, boolean post) {
+            if (vin.equals(mCurrentVin)) {
+                return doRequest(queue, url, post);
+            } else {
+                // Change to the new VIN and perform the request in a separate thread
+                final AsyncSubject<String> o = AsyncSubject.create();
+                setActive(queue, vin).subscribe(set -> {
+                    mCurrentVin = vin;
+                    if (hasExpired()) {
+                        refresh(queue).subscribe(
+                                api -> doRequest(queue, url, post).subscribe(o),
+                                o::onError
+                        );
+                    } else {
+                        doRequest(queue, url, post).subscribe(o);
                     }
                 }, o::onError);
                 return o.asObservable();
@@ -226,9 +288,9 @@ public class ZEServicesAPI {
             return doVinRequest(queue, vin, URL, null, false);
         }
 
-        public Observable<JSONObject> startPrecondition(RequestQueue queue, String vin) {
+        public Observable<String> startPrecondition(RequestQueue queue, String vin) {
             final String URL = "/api/vehicle/" + vin + "/air-conditioning";
-            return doVinRequest(queue, vin, URL, null, true);
+            return doVinRequest(queue, vin, URL, true);
         }
 
         public Observable<JSONObject> schedulePrecondition(RequestQueue queue, String vin, String startTime) {

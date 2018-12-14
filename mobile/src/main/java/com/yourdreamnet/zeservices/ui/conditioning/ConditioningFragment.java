@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,6 +53,7 @@ public class ConditioningFragment extends Fragment {
                     TextView status = getView().findViewById(R.id.status);
                     status.setText(R.string.started_condition);
                 }), error -> Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                    Log.e("Conditioning", "Unable to pre-condition car", error);
                     TextView status = getView().findViewById(R.id.status);
                     status.setText(R.string.error_conditioning);
                 })
