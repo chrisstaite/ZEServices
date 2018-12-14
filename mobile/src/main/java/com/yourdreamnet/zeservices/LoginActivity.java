@@ -55,6 +55,8 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private ZEServicesAPI.AuthenticatedAPI mCachedApi;
+    private boolean mIsPaused;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +79,9 @@ public class LoginActivity extends AppCompatActivity {
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+        mIsPaused = false;
+        mCachedApi = null;
     }
 
     @Override
@@ -85,6 +90,23 @@ public class LoginActivity extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             loadLogin();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mIsPaused = true;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mIsPaused = false;
+
+        if (mCachedApi != null) {
+            loginComplete(mCachedApi);
+            mCachedApi = null;
         }
     }
 
@@ -220,20 +242,31 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    private void loginComplete(ZEServicesAPI.AuthenticatedAPI api) {
+        runOnUiThread(() -> {
+            showProgress(false);
+            Intent startIntent = new Intent(this, MainActivity.class);
+            startIntent.putExtra("api", api);
+            startIntent.setFlags(startIntent.getFlags() | Intent.FLAG_ACTIVITY_NO_HISTORY);
+            startActivity(startIntent);
+        });
+    }
+
     private void login(String email, String password) {
         showProgress(true);
         new ZEServicesAPI(email, password).
-            getAuthenticated(QueueSingleton.getQueue(this)).
+            getAuthenticated(QueueSingleton.getQueue()).
             subscribe(
-                api -> runOnUiThread(() -> {
-                    showProgress(false);
+                api -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         saveLogin(email, password);
                     }
-                    Intent startIntent = new Intent(this, MainActivity.class);
-                    startIntent.putExtra("api", api);
-                    startActivity(startIntent);
-                }),
+                    if (mIsPaused) {
+                        mCachedApi = api;
+                    } else {
+                        loginComplete(api);
+                    }
+                },
                 error -> runOnUiThread(() -> {
                     Log.e("LoginActivity", "Unable to authenticate", error);
                     showProgress(false);

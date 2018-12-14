@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -62,7 +61,7 @@ public class VinSelectFragment extends Fragment {
         final String[] vins = mAuthenticatedApi.getAvailableVins();
         if (vins.length == 1) {
             if (!mAuthenticatedApi.getCurrentVin().equals(vins[0])) {
-                mAuthenticatedApi.setActive(QueueSingleton.getQueue(getContext()), vins[0]);
+                mAuthenticatedApi.setActive(QueueSingleton.getQueue(), vins[0]);
             }
             new Handler().post(() -> selectVin(vins[0]));
         } else {

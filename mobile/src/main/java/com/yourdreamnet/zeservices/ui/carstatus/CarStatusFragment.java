@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -50,22 +51,45 @@ public class CarStatusFragment extends Fragment {
         return inflater.inflate(R.layout.car_status_fragment, container, false);
     }
 
+    private void setLoading(boolean loading) {
+        ProgressBar progress = Objects.requireNonNull(getView()).findViewById(R.id.loading);
+        ConstraintLayout layout = getView().findViewById(R.id.layout);
+        for (int i = 0; i < layout.getChildCount(); i++) {
+            View view = layout.getChildAt(i);
+            if (view != progress) {
+                view.setVisibility(loading ? View.GONE : View.VISIBLE);
+            }
+        }
+        progress.setVisibility(loading ? View.VISIBLE : View.GONE);
+    }
+
+    private void goToLogin() {
+        Intent loginIntent = new Intent(getContext(), LoginActivity.class);
+        loginIntent.setFlags(loginIntent.getFlags() | Intent.FLAG_ACTIVITY_NO_HISTORY);
+        startActivity(loginIntent);
+    }
+
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mViewModel = ViewModelProviders.of(this).get(CarStatusViewModel.class);
 
-        mAuthenticatedApi.getBattery(QueueSingleton.getQueue(getContext()), mVin).subscribe(
-            batteryData -> {
+        setLoading(true);
+        mAuthenticatedApi.getBattery(QueueSingleton.getQueue(), mVin).subscribe(
+            batteryData -> Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                setLoading(false);
                 if (!mViewModel.setBatteryData(batteryData)) {
-                    startActivity(new Intent(getContext(), LoginActivity.class));
+                    goToLogin();
                 } else {
-                    Objects.requireNonNull(getActivity()).runOnUiThread(this::updateView);
+                    updateView();
                 }
-            },
+            }),
             error -> {
                 Log.e("CarStatus", "Could not retrieve car status", error);
-                startActivity(new Intent(getContext(), LoginActivity.class));
+                Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                    setLoading(false);
+                    goToLogin();
+                });
             }
         );
 
@@ -133,7 +157,7 @@ public class CarStatusFragment extends Fragment {
 
     void startCharging(View button) {
         button.setVisibility(View.INVISIBLE);
-        mAuthenticatedApi.startCharge(QueueSingleton.getQueue(getContext()), mVin).subscribe(
+        mAuthenticatedApi.startCharge(QueueSingleton.getQueue(), mVin).subscribe(
             response -> {
                 mViewModel.setCharging(true);
                 Objects.requireNonNull(getActivity()).runOnUiThread(this::updateView);
