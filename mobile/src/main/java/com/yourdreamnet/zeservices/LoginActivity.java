@@ -89,6 +89,12 @@ public class LoginActivity extends Activity {
     public void onStart() {
         super.onStart();
 
+        if (getIntent().getBooleanExtra("logout", false)) {
+            // Delete the shared preferences and cancel any cached login
+            mCachedApi = null;
+            getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE).edit().clear().apply();
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             loadLogin();
         }
@@ -104,12 +110,6 @@ public class LoginActivity extends Activity {
     public void onResume() {
         super.onResume();
         mIsPaused = false;
-
-        if (getIntent().getBooleanExtra("logout", false)) {
-            // Delete the shared preferences and cancel any cached login
-            mCachedApi = null;
-            getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE).edit().clear().apply();
-        }
 
         if (mCachedApi != null) {
             loginComplete(mCachedApi);
