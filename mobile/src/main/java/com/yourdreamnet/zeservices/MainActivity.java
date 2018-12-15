@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.google.android.material.navigation.NavigationView;
+import com.yourdreamnet.zeservices.api.AuthenticatedApi;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,7 +17,7 @@ import androidx.viewpager.widget.ViewPager;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ZEServicesAPI.AuthenticatedAPI mAuthenticatedApi;
+    private AuthenticatedApi mAuthenticatedApi;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -101,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public ZEServicesAPI.AuthenticatedAPI getApi() {
+    public AuthenticatedApi getApi() {
         return mAuthenticatedApi;
     }
 

@@ -20,6 +20,9 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.yourdreamnet.zeservices.api.AuthenticatedApi;
+import com.yourdreamnet.zeservices.api.ZEServicesApi;
+
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -55,7 +58,7 @@ public class LoginActivity extends Activity {
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
-    private ZEServicesAPI.AuthenticatedAPI mCachedApi;
+    private AuthenticatedApi mCachedApi;
     private boolean mIsPaused;
 
     @Override
@@ -249,7 +252,7 @@ public class LoginActivity extends Activity {
         }
     }
 
-    private void loginComplete(ZEServicesAPI.AuthenticatedAPI api) {
+    private void loginComplete(AuthenticatedApi api) {
         runOnUiThread(() -> {
             showProgress(false);
             Intent startIntent = new Intent(this, MainActivity.class);
@@ -261,7 +264,7 @@ public class LoginActivity extends Activity {
 
     private void login(String email, String password) {
         showProgress(true);
-        new ZEServicesAPI(email, password).
+        new ZEServicesApi(email, password).
             getAuthenticated(QueueSingleton.getQueue()).
             subscribe(
                 api -> {
@@ -317,4 +320,3 @@ public class LoginActivity extends Activity {
     }
 
 }
-

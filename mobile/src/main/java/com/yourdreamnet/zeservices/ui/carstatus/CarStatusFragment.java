@@ -19,9 +19,10 @@ import com.yourdreamnet.zeservices.LoginActivity;
 import com.yourdreamnet.zeservices.MainActivity;
 import com.yourdreamnet.zeservices.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
-import com.yourdreamnet.zeservices.ZEServicesAPI;
+import com.yourdreamnet.zeservices.api.AuthenticatedApi;
 
 import java.text.DateFormat;
+import java.util.Date;
 import java.util.Objects;
 
 import androidx.fragment.app.Fragment;
@@ -35,7 +36,7 @@ public class CarStatusFragment extends Fragment {
         return new CarStatusFragment();
     }
 
-    private ZEServicesAPI.AuthenticatedAPI getApi() {
+    private AuthenticatedApi getApi() {
         return ((MainActivity) getActivity()).getApi();
     }
 
@@ -68,8 +69,28 @@ public class CarStatusFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         mViewModel = ViewModelProviders.of(this).get(CarStatusViewModel.class);
 
+        Button toggle = Objects.requireNonNull(getView()).findViewById(R.id.rangeToggle);
+        toggle.setText(mViewModel.isRangeMiles() ? R.string.miles : R.string.km);
+        toggle.setOnClickListener(this::toggleRange);
+
+        Button startCharging = getView().findViewById(R.id.startCharge);
+        startCharging.setOnClickListener(this::startCharging);
+
+        if (mViewModel.getLastUpdate() == null) {
+            loadData();
+        } else {
+            updateView();
+            // The car status is updated every 15 minutes
+            Date fifteenMinutesAgo = new Date(new Date().getTime() - (15 * 60 * 1000));
+            if (mViewModel.getLastUpdate().before(fifteenMinutesAgo)) {
+                loadData();
+            }
+        }
+    }
+
+    private void loadData() {
         setLoading(true);
-        ZEServicesAPI.AuthenticatedAPI api = getApi();
+        AuthenticatedApi api = getApi();
         api.getBattery(QueueSingleton.getQueue(), api.getCurrentVin()).subscribe(
             batteryData -> Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                 setLoading(false);
@@ -87,13 +108,6 @@ public class CarStatusFragment extends Fragment {
                 });
             }
         );
-
-        Button toggle = Objects.requireNonNull(getView()).findViewById(R.id.rangeToggle);
-        toggle.setText(mViewModel.isRangeMiles() ? R.string.miles : R.string.km);
-        toggle.setOnClickListener(this::toggleRange);
-
-        Button startCharging = getView().findViewById(R.id.startCharge);
-        startCharging.setOnClickListener(this::startCharging);
     }
 
     private void updateView() {
@@ -111,7 +125,7 @@ public class CarStatusFragment extends Fragment {
         } else {
             progressBar.setProgress(level);
         }
-        percentageView.setText(String.format(getString(R.string.charging_percentage), String.valueOf(level)));
+        percentageView.setText(String.format(getString(R.string.charging_percentage), level));
 
         TextView chargingText = getView().findViewById(R.id.chargingText);
         ImageView charging = getView().findViewById(R.id.charging);
@@ -138,7 +152,7 @@ public class CarStatusFragment extends Fragment {
 
         Button startCharging = getView().findViewById(R.id.startCharge);
         startCharging.setVisibility(
-            mViewModel.isPluggedIn() && !mViewModel.isCharging() ? View.VISIBLE : View.INVISIBLE
+            !mViewModel.isCharging() ? View.VISIBLE : View.INVISIBLE
         );
     }
 
@@ -152,15 +166,18 @@ public class CarStatusFragment extends Fragment {
 
     private void startCharging(View button) {
         button.setVisibility(View.INVISIBLE);
-        ZEServicesAPI.AuthenticatedAPI api = getApi();
+        AuthenticatedApi api = getApi();
         api.startCharge(QueueSingleton.getQueue(), api.getCurrentVin()).subscribe(
             response -> {
                 mViewModel.setCharging(true);
                 Objects.requireNonNull(getActivity()).runOnUiThread(this::updateView);
             },
-            error -> Objects.requireNonNull(getActivity()).runOnUiThread(
-                () -> button.setVisibility(View.VISIBLE)
-            )
+            error -> {
+                Log.e("CarStatus", "Unable to start charging", error);
+                Objects.requireNonNull(getActivity()).runOnUiThread(
+                    () -> button.setVisibility(View.VISIBLE)
+                );
+            }
         );
     }
 

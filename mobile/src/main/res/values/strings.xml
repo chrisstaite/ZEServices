@@ -14,7 +14,7 @@
     <string name="charging">Charging</string>
     <string name="plugged_in">Plugged in</string>
     <string name="not_plugged_in">Not plugged in</string>
-    <string name="charging_percentage">%s%%</string>
+    <string name="charging_percentage">%d%%</string>
     <string name="km">km</string>
     <string name="miles">miles</string>
     <string name="startCharge">Start Charging</string>
@@ -28,4 +28,10 @@
     <string name="error_conditioning">Error starting conditioning</string>
     <string name="last_scheduled">Last scheduled: %s</string>
     <string name="logout">Logout</string>
+    <string name="started_charge">Start</string>
+    <string name="ended_charge">End</string>
+    <string name="accelerated">Accelerated</string>
+    <string name="invalid">Invalid</string>
+    <string name="slow">Slow</string>
+    <string name="unknown">Unknown</string>
 </resources>

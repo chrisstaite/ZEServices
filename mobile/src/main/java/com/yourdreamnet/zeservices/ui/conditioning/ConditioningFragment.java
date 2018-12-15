@@ -18,7 +18,7 @@ import android.widget.TextView;
 import com.yourdreamnet.zeservices.MainActivity;
 import com.yourdreamnet.zeservices.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
-import com.yourdreamnet.zeservices.ZEServicesAPI;
+import com.yourdreamnet.zeservices.api.AuthenticatedApi;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -38,7 +38,7 @@ public class ConditioningFragment extends Fragment {
         return inflater.inflate(R.layout.conditioning_fragment, container, false);
     }
 
-    private ZEServicesAPI.AuthenticatedAPI getApi() {
+    private AuthenticatedApi getApi() {
         return ((MainActivity) getActivity()).getApi();
     }
 
@@ -49,7 +49,7 @@ public class ConditioningFragment extends Fragment {
     }
 
     private void updateStatus() {
-        ZEServicesAPI.AuthenticatedAPI api = getApi();
+        AuthenticatedApi api = getApi();
         api.preconditionStatus(QueueSingleton.getQueue(), api.getCurrentVin()).
             subscribe(result -> {
                 mViewModel.setConditioningData(result);
@@ -78,7 +78,7 @@ public class ConditioningFragment extends Fragment {
         mViewModel = ViewModelProviders.of(this).get(ConditioningViewModel.class);
 
         Button condition = getView().findViewById(R.id.start_conditioning);
-        ZEServicesAPI.AuthenticatedAPI api = getApi();
+        AuthenticatedApi api = getApi();
         condition.setOnClickListener(
             view -> api.startPrecondition(QueueSingleton.getQueue(), api.getCurrentVin()).
                 subscribe(result -> Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
