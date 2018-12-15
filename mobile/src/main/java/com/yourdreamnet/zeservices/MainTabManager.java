@@ -51,7 +51,7 @@ public class MainTabManager extends FragmentPagerAdapter {
                 string = R.string.car_status;
                 break;
             case 1:
-                icon = R.drawable.ic_baseline_fan;
+                icon = R.drawable.ic_baseline_ac_unit;
                 string = R.string.air_conditioning;
                 break;
             case 2:

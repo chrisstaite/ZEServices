@@ -27,4 +27,5 @@
     <string name="started_condition">Pre-conditioning started</string>
     <string name="error_conditioning">Error starting conditioning</string>
     <string name="last_scheduled">Last scheduled: %s</string>
+    <string name="logout">Logout</string>
 </resources>

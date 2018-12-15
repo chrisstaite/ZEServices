@@ -105,6 +105,12 @@ public class LoginActivity extends Activity {
         super.onResume();
         mIsPaused = false;
 
+        if (getIntent().getBooleanExtra("logout", false)) {
+            // Delete the shared preferences and cancel any cached login
+            mCachedApi = null;
+            getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE).edit().clear().apply();
+        }
+
         if (mCachedApi != null) {
             loginComplete(mCachedApi);
             mCachedApi = null;
