@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.logout:
                 Intent startIntent = new Intent(this, LoginActivity.class);
                 startIntent.putExtra("logout", true);
+                startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
                 startActivity(startIntent);
                 return true;
             default:
@@ -43,22 +44,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.main_activity);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
         // Check we are authenticated before we continue, otherwise return to the login screen
         mAuthenticatedApi = getIntent().getParcelableExtra("api");
         if (mAuthenticatedApi == null) {
             Intent startIntent = new Intent(this, LoginActivity.class);
+            startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
             startActivity(startIntent);
             return;
         }
 
-        setContentView(R.layout.main_activity);
-
         DrawerLayout drawer = findViewById(R.id.drawer);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-            this,
-            drawer,
-            R.string.navigation_drawer_open,
-            R.string.navigation_drawer_close
+                this,
+                drawer,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close
         );
         toggle.setDrawerIndicatorEnabled(true);
         drawer.addDrawerListener(toggle);
