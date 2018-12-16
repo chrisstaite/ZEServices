@@ -34,4 +34,8 @@
     <string name="invalid">Invalid</string>
     <string name="slow">Slow</string>
     <string name="unknown">Unknown</string>
+    <string name="login_description">This app is an unofficial wrapper around the ZE Services API.  Log in using your ZE Services email and password as you created on Renault\'s website.</string>
+    <string name="register">Register</string>
+    <string name="save_credentials">Save login details</string>
+    <string name="save_credentials_insecure">Save login details (not encrypted)</string>
 </resources>

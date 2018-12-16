@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -19,6 +20,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Switch;
 
 import com.yourdreamnet.zeservices.api.AuthenticatedApi;
 import com.yourdreamnet.zeservices.api.ZEServicesApi;
@@ -53,11 +55,13 @@ public class LoginActivity extends Activity {
     private static final String PASSWORD_IV_KEY = "password_iv";
     private static final String LOGIN_KEY = "loginKey";
 
-    // UI references.
+    // UI references
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private Switch mSaveSwitch;
+
     private AuthenticatedApi mCachedApi;
     private boolean mIsPaused;
 
@@ -78,14 +82,32 @@ public class LoginActivity extends Activity {
             return false;
         });
 
-        Button mEmailSignInButton = findViewById(R.id.email_sign_in_button);
-        mEmailSignInButton.setOnClickListener(view -> attemptLogin());
+        Button emailSignInButton = findViewById(R.id.email_sign_in_button);
+        emailSignInButton.setOnClickListener(view -> attemptLogin());
+
+        Button registerButton = findViewById(R.id.register);
+        registerButton.setOnClickListener(view -> goToRegistration());
+
+        mSaveSwitch = findViewById(R.id.save_credentials);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            mSaveSwitch.setText(R.string.save_credentials_insecure);
+            mSaveSwitch.setChecked(false);
+        } else {
+            mSaveSwitch.setChecked(true);
+        }
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
         mIsPaused = false;
         mCachedApi = null;
+    }
+
+    private void goToRegistration() {
+        Intent browserIntent = new Intent(
+            Intent.ACTION_VIEW, Uri.parse("https://www.services.renault-ze.com/user/registration")
+        );
+        startActivity(browserIntent);
     }
 
     @Override
@@ -95,11 +117,13 @@ public class LoginActivity extends Activity {
         if (getIntent().getBooleanExtra("logout", false)) {
             // Delete the shared preferences and cancel any cached login
             mCachedApi = null;
-            getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE).edit().clear().apply();
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            loadLogin();
+            clearLoginSave();
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                loadLoginSecure();
+            } else {
+                loadLoginInsecure();
+            }
         }
     }
 
@@ -120,9 +144,17 @@ public class LoginActivity extends Activity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void loadLogin() {
+    private void loadLoginInsecure() {
+        SharedPreferences sharedPref = getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE);
+        String email = sharedPref.getString(EMAIL_KEY, null);
+        String password = sharedPref.getString(PASSWORD_KEY, null);
+        if (!email.isEmpty() && !password.isEmpty()) {
+            login(email, password, false);
+        }
+    }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void loadLoginSecure() {
         try {
             SharedPreferences sharedPref = getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE);
             byte[] emailIv = Base64.decode(sharedPref.getString(EMAIL_IV_KEY, null), Base64.DEFAULT);
@@ -148,7 +180,7 @@ public class LoginActivity extends Activity {
                     mEmailView.setText(email);
                     mPasswordView.setText(password);
                     if (!email.isEmpty() && !password.isEmpty()) {
-                        login(email, password);
+                        login(email, password, false);
                     }
                 }
             } catch (BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException | NoSuchPaddingException | InvalidKeyException | KeyStoreException | UnrecoverableEntryException | CertificateException | IOException | NoSuchAlgorithmException e) {
@@ -159,8 +191,20 @@ public class LoginActivity extends Activity {
         }
     }
 
+    private void clearLoginSave() {
+        getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE).edit().clear().apply();
+    }
+
+    private void saveLoginInsecure(String email, String password) {
+        SharedPreferences sharedPref = getSharedPreferences(PREFERENCE_FILE, MODE_PRIVATE);
+        sharedPref.edit().
+                putString(EMAIL_KEY, email).
+                putString(PASSWORD_KEY, password).
+                apply();
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void saveLogin(String email, String password) {
+    private void saveLoginSecure(String email, String password) {
         try {
             KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
             keyStore.load(null);
@@ -248,7 +292,7 @@ public class LoginActivity extends Activity {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            login(email, password);
+            login(email, password, mSaveSwitch.isChecked());
         }
     }
 
@@ -262,14 +306,18 @@ public class LoginActivity extends Activity {
         });
     }
 
-    private void login(String email, String password) {
+    private void login(String email, String password, boolean save) {
         showProgress(true);
         new ZEServicesApi(email, password).
             getAuthenticated(QueueSingleton.getQueue()).
             subscribe(
                 api -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        saveLogin(email, password);
+                    if (save) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            saveLoginSecure(email, password);
+                        } else {
+                            saveLoginInsecure(email, password);
+                        }
                     }
                     if (mIsPaused) {
                         mCachedApi = api;
