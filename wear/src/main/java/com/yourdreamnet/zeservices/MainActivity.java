@@ -22,6 +22,8 @@ import com.yourdreamnet.zecommon.CredentialStore;
 import java.util.Iterator;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+
 public class MainActivity extends WearableActivity implements DataClient.OnDataChangedListener {
 
     private CredentialStore mStore;
@@ -51,6 +53,7 @@ public class MainActivity extends WearableActivity implements DataClient.OnDataC
     @Override
     protected void onPause() {
         super.onPause();
+        Wearable.getDataClient(this).removeListener(this);
     }
 
     private void pullLoginDetails() {
@@ -110,23 +113,21 @@ public class MainActivity extends WearableActivity implements DataClient.OnDataC
     }
 
     @Override
-    public void onDataChanged(DataEventBuffer dataEventBuffer) {
-        if (dataEventBuffer != null) {
-            for (DataEvent event : dataEventBuffer) {
-                DataItem item = event.getDataItem();
-                if (item.getUri().getPath().equals("/zeservices/credentials")) {
-                    switch (event.getType()) {
-                        case DataEvent.TYPE_CHANGED: {
-                            DataMap map = DataMapItem.fromDataItem(item).getDataMap();
-                            mStore.saveLoginSecure(map.getString("email"), map.getString("password"));
-                            break;
-                        }
-                        case DataEvent.TYPE_DELETED:
-                            mStore.clear();
-                            break;
+    public void onDataChanged(@NonNull DataEventBuffer dataEventBuffer) {
+        for (DataEvent event : dataEventBuffer) {
+            DataItem item = event.getDataItem();
+            if (item.getUri().getPath().equals("/zeservices/credentials")) {
+                switch (event.getType()) {
+                    case DataEvent.TYPE_CHANGED: {
+                        DataMap map = DataMapItem.fromDataItem(item).getDataMap();
+                        mStore.saveLoginSecure(map.getString("email"), map.getString("password"));
+                        break;
                     }
-                    // TODO: Refresh
+                    case DataEvent.TYPE_DELETED:
+                        mStore.clear();
+                        break;
                 }
+                // TODO: Refresh
             }
         }
     }
