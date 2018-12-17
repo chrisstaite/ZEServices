@@ -17,6 +17,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
 
+import com.google.android.gms.wearable.DataClient;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
 import com.yourdreamnet.zecommon.CredentialStore;
 import com.yourdreamnet.zecommon.api.AuthenticatedApi;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
@@ -92,6 +97,7 @@ public class LoginActivity extends Activity {
         if (getIntent().getBooleanExtra("logout", false)) {
             // Delete the shared preferences and cancel any cached login
             mCachedApi = null;
+            clearWearable();
             mStore.clear();
         } else {
             CredentialStore.Credentials credentials;
@@ -179,6 +185,24 @@ public class LoginActivity extends Activity {
         });
     }
 
+    private void saveToWearable(String email, String password) {
+        DataClient client = Wearable.getDataClient(this);
+        PutDataMapRequest request = PutDataMapRequest.create("/zeservices/credentials");
+        DataMap dataMap = request.getDataMap();
+        dataMap.putString("email", email);
+        dataMap.putString("password", password);
+        client.putDataItem(request.asPutDataRequest());
+    }
+
+    private void clearWearable() {
+        Uri uri = new Uri.Builder()
+                .scheme(PutDataRequest.WEAR_URI_SCHEME)
+                .path("/zeservices/credentials")
+                .authority("*")
+                .build();
+        Wearable.getDataClient(this).deleteDataItems(uri);
+    }
+
     private void login(String email, String password, boolean save) {
         showProgress(true);
         new ZEServicesApi(email, password).
@@ -192,6 +216,7 @@ public class LoginActivity extends Activity {
                             mStore.saveLoginInsecure(email, password);
                         }
                     }
+                    saveToWearable(email, password);
                     if (mIsPaused) {
                         mCachedApi = api;
                     } else {

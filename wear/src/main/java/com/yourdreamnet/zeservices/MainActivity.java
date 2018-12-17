@@ -7,6 +7,9 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.gms.wearable.DataClient;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
@@ -19,7 +22,7 @@ import com.yourdreamnet.zecommon.CredentialStore;
 import java.util.Iterator;
 import java.util.List;
 
-public class MainActivity extends WearableActivity {
+public class MainActivity extends WearableActivity implements DataClient.OnDataChangedListener {
 
     private CredentialStore mStore;
 
@@ -37,6 +40,17 @@ public class MainActivity extends WearableActivity {
         if (credentials.email().isEmpty() || credentials.password().isEmpty()) {
             pullLoginDetails();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Wearable.getDataClient(this).addListener(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     private void pullLoginDetails() {
@@ -93,6 +107,28 @@ public class MainActivity extends WearableActivity {
         loadingText.setText(R.string.login_complete);
         ProgressBar progress = findViewById(R.id.progressBar);
         progress.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onDataChanged(DataEventBuffer dataEventBuffer) {
+        if (dataEventBuffer != null) {
+            for (DataEvent event : dataEventBuffer) {
+                DataItem item = event.getDataItem();
+                if (item.getUri().getPath().equals("/zeservices/credentials")) {
+                    switch (event.getType()) {
+                        case DataEvent.TYPE_CHANGED: {
+                            DataMap map = DataMapItem.fromDataItem(item).getDataMap();
+                            mStore.saveLoginSecure(map.getString("email"), map.getString("password"));
+                            break;
+                        }
+                        case DataEvent.TYPE_DELETED:
+                            mStore.clear();
+                            break;
+                    }
+                    // TODO: Refresh
+                }
+            }
+        }
     }
 
 }
