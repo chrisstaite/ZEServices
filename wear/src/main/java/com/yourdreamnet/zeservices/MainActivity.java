@@ -3,6 +3,8 @@ package com.yourdreamnet.zeservices;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.android.gms.wearable.DataItem;
@@ -82,11 +84,15 @@ public class MainActivity extends WearableActivity {
     private void setNoLoginAvailable() {
         TextView loadingText = findViewById(R.id.loading_text);
         loadingText.setText(R.string.load_failed);
+        ProgressBar progress = findViewById(R.id.progressBar);
+        progress.setVisibility(View.GONE);
     }
 
     private void credentialsTransferred() {
         TextView loadingText = findViewById(R.id.loading_text);
         loadingText.setText(R.string.login_complete);
+        ProgressBar progress = findViewById(R.id.progressBar);
+        progress.setVisibility(View.GONE);
     }
 
 }
