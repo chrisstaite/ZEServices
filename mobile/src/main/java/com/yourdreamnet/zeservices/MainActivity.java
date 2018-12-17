@@ -7,7 +7,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.google.android.material.navigation.NavigationView;
-import com.yourdreamnet.zeservices.api.AuthenticatedApi;
+import com.yourdreamnet.zecommon.api.AuthenticatedApi;
+import com.yourdreamnet.zecommon.api.QueueSingleton;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;

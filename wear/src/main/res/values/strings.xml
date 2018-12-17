@@ -1,8 +1,6 @@
 <resources>
-    <string name="app_name">ZEServices</string>
-    <!--
-    This string is used for square devices and overridden by hello_world in
-    values-round/strings.xml for round devices.
-    -->
-    <string name="hello_world">Hello Square World!</string>
+    <string name="app_name">Z.E. Services</string>
+    <string name="loading_login">Loading the login details from your phone</string>
+    <string name="load_failed">Please login on your phone then re-open</string>
+    <string name="login_complete">Loaded credentials from the phone</string>
 </resources>

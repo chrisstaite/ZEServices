@@ -16,9 +16,9 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.yourdreamnet.zeservices.MainActivity;
-import com.yourdreamnet.zeservices.QueueSingleton;
+import com.yourdreamnet.zecommon.api.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
-import com.yourdreamnet.zeservices.api.AuthenticatedApi;
+import com.yourdreamnet.zecommon.api.AuthenticatedApi;
 
 import java.text.DateFormat;
 import java.util.Date;

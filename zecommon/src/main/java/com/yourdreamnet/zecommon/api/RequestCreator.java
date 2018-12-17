@@ -1,4 +1,4 @@
-package com.yourdreamnet.zeservices.api;
+package com.yourdreamnet.zecommon.api;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;

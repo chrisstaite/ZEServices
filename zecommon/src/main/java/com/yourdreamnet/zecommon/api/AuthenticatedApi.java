@@ -1,4 +1,4 @@
-package com.yourdreamnet.zeservices.api;
+package com.yourdreamnet.zecommon.api;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -62,7 +62,7 @@ public class AuthenticatedApi implements Parcelable {
         }
     };
 
-    boolean hasExpired() {
+    private boolean hasExpired() {
         // The token should be a valid JWT token of three parts
         final String[] parts = mAuthenticationToken.split("\\.");
         if (parts.length != 3) {
