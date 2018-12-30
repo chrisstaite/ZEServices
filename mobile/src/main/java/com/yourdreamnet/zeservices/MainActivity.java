@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mAuthenticatedApi = null;
+
         setContentView(R.layout.main_activity);
     }
 
@@ -53,12 +55,16 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
 
         // Check we are authenticated before we continue, otherwise return to the login screen
-        mAuthenticatedApi = getIntent().getParcelableExtra("api");
-        if (mAuthenticatedApi == null) {
-            Intent startIntent = new Intent(this, LoginActivity.class);
-            startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-            startActivity(startIntent);
-            return;
+        AuthenticatedApi intentApi = getIntent().getParcelableExtra("api");
+        if (intentApi == null) {
+            if (mAuthenticatedApi == null) {
+                Intent startIntent = new Intent(this, LoginActivity.class);
+                startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                startActivity(startIntent);
+                return;
+            }
+        } else {
+            mAuthenticatedApi = intentApi;
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer);
