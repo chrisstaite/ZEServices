@@ -1,6 +1,7 @@
 package com.yourdreamnet.zeservices.ui.carstatus;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -28,10 +29,16 @@ import java.util.Objects;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
+import static android.content.Context.MODE_PRIVATE;
+
 public class CarStatusFragment extends Fragment {
+
+    private static final String PREFERENCE_FILE = "options";
+    private static final String MILES = "miles";
 
     private CarStatusViewModel mViewModel;
 
+    @SuppressWarnings("unused")
     public static CarStatusFragment newInstance() {
         return new CarStatusFragment();
     }
@@ -68,6 +75,11 @@ public class CarStatusFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mViewModel = ViewModelProviders.of(this).get(CarStatusViewModel.class);
+
+        SharedPreferences sharedPref = getContext().getSharedPreferences(
+            PREFERENCE_FILE, MODE_PRIVATE
+        );
+        mViewModel.setRangeMiles(sharedPref.getBoolean(MILES, true));
 
         Button toggle = Objects.requireNonNull(getView()).findViewById(R.id.rangeToggle);
         toggle.setText(mViewModel.isRangeMiles() ? R.string.miles : R.string.km);
@@ -158,6 +170,10 @@ public class CarStatusFragment extends Fragment {
 
     private void toggleRange(View button) {
         boolean miles = !mViewModel.isRangeMiles();
+        SharedPreferences sharedPref = getContext().getSharedPreferences(
+            PREFERENCE_FILE, MODE_PRIVATE
+        );
+        sharedPref.edit().putBoolean(MILES, miles).apply();
         ((Button) button).setText(miles ? R.string.miles : R.string.km);
         mViewModel.setRangeMiles(miles);
         TextView range = Objects.requireNonNull(getView()).findViewById(R.id.range);

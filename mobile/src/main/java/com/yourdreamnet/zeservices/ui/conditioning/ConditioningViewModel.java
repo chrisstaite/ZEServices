@@ -9,6 +9,7 @@ import java.util.Date;
 
 import androidx.lifecycle.ViewModel;
 
+@SuppressWarnings("WeakerAccess")
 public class ConditioningViewModel extends ViewModel {
 
     private Date mLastPrecondition;
