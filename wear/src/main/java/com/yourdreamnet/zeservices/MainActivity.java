@@ -1,8 +1,11 @@
 package com.yourdreamnet.zeservices;
 
+import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -18,6 +21,8 @@ import com.google.android.gms.wearable.NodeClient;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.yourdreamnet.zecommon.CredentialStore;
+import com.yourdreamnet.zecommon.api.QueueSingleton;
+import com.yourdreamnet.zecommon.api.ZEServicesApi;
 
 import java.util.Iterator;
 import java.util.List;
@@ -41,6 +46,8 @@ public class MainActivity extends WearableActivity implements DataClient.OnDataC
         CredentialStore.Credentials credentials = mStore.loadLoginSecure();
         if (credentials.email().isEmpty() || credentials.password().isEmpty()) {
             pullLoginDetails();
+        } else {
+            credentialsTransferred(credentials);
         }
     }
 
@@ -90,7 +97,7 @@ public class MainActivity extends WearableActivity implements DataClient.OnDataC
                     String email = map.getString("email");
                     String password = map.getString("password");
                     mStore.saveLoginSecure(email, password);
-                    credentialsTransferred();
+                    credentialsTransferred(new CredentialStore.Credentials(email, password));
                 }
             });
         } else {
@@ -105,11 +112,28 @@ public class MainActivity extends WearableActivity implements DataClient.OnDataC
         progress.setVisibility(View.GONE);
     }
 
-    private void credentialsTransferred() {
-        TextView loadingText = findViewById(R.id.loading_text);
+
+
+    private void credentialsTransferred(CredentialStore.Credentials credentials) {
+        final TextView loadingText = findViewById(R.id.loading_text);
         loadingText.setText(R.string.login_complete);
         ProgressBar progress = findViewById(R.id.progressBar);
         progress.setVisibility(View.GONE);
+
+        new ZEServicesApi(credentials.email(), credentials.password()).
+                getAuthenticated(QueueSingleton.getQueue()).
+                subscribe(
+                        api -> runOnUiThread(() -> {
+                            Intent startIntent = new Intent(this, CarDetails.class);
+                            startIntent.putExtra("api", api);
+                            startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                            startActivity(startIntent);
+                        }),
+                        error -> runOnUiThread(() -> {
+                            Log.e("LoginActivity", "Unable to authenticate", error);
+                            loadingText.setText(R.string.login_invalid);
+                        })
+                );
     }
 
     @Override
@@ -121,13 +145,13 @@ public class MainActivity extends WearableActivity implements DataClient.OnDataC
                     case DataEvent.TYPE_CHANGED: {
                         DataMap map = DataMapItem.fromDataItem(item).getDataMap();
                         mStore.saveLoginSecure(map.getString("email"), map.getString("password"));
+                        credentialsTransferred(new CredentialStore.Credentials(map.getString("email"), map.getString("password")));
                         break;
                     }
                     case DataEvent.TYPE_DELETED:
                         mStore.clear();
                         break;
                 }
-                // TODO: Refresh
             }
         }
     }

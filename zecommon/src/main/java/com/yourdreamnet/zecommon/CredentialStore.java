@@ -46,7 +46,7 @@ public class CredentialStore {
         private String mEmail;
         private String mPassword;
 
-        private Credentials(String email, String password) {
+        public Credentials(String email, String password) {
             mEmail = email;
             mPassword = password;
         }
