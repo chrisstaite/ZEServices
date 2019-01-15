@@ -18,6 +18,7 @@ import androidx.viewpager.widget.ViewPager;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String API_STORE = "api";
     private AuthenticatedApi mAuthenticatedApi;
 
     @Override
@@ -45,9 +46,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mAuthenticatedApi = null;
+        if (savedInstanceState != null) {
+            mAuthenticatedApi = savedInstanceState.getParcelable(API_STORE);
+        }
 
         setContentView(R.layout.main_activity);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putParcelable(API_STORE, mAuthenticatedApi);
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
