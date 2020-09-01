@@ -16,11 +16,11 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.yourdreamnet.zecommon.api.Vehicle;
 import com.yourdreamnet.zeservices.LoginActivity;
 import com.yourdreamnet.zeservices.MainActivity;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
-import com.yourdreamnet.zecommon.api.AuthenticatedApi;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -43,7 +43,7 @@ public class CarStatusFragment extends Fragment {
         return new CarStatusFragment();
     }
 
-    private AuthenticatedApi getApi() {
+    private Vehicle getApi() {
         return ((MainActivity) getActivity()).getApi();
     }
 
@@ -101,9 +101,14 @@ public class CarStatusFragment extends Fragment {
     }
 
     private void loadData() {
+        Log.w("CarStatusFragment", "Loading data");
         setLoading(true);
-        AuthenticatedApi api = getApi();
-        api.getBattery(QueueSingleton.getQueue(), api.getCurrentVin()).subscribe(
+        Vehicle api = getApi();
+        if (api == null) {
+            Log.w("CarStatusFragment", "No API available yet");
+            return;
+        }
+        api.getBattery(QueueSingleton.getQueue()).subscribe(
             batteryData -> Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                 setLoading(false);
                 if (!mViewModel.setBatteryData(batteryData)) {
@@ -182,8 +187,8 @@ public class CarStatusFragment extends Fragment {
 
     private void startCharging(View button) {
         button.setVisibility(View.INVISIBLE);
-        AuthenticatedApi api = getApi();
-        api.startCharge(QueueSingleton.getQueue(), api.getCurrentVin()).subscribe(
+        Vehicle api = getApi();
+        api.startCharge(QueueSingleton.getQueue()).subscribe(
             response -> {
                 mViewModel.setCharging(true);
                 Objects.requireNonNull(getActivity()).runOnUiThread(this::updateView);

@@ -7,12 +7,14 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.yourdreamnet.zecommon.api.AuthenticatedApi;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
+import com.yourdreamnet.zecommon.api.Vehicle;
+
+import java.util.List;
 
 public class CarDetails extends WearableActivity {
 
-    private AuthenticatedApi mApi;
+    private List<Vehicle> mApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,13 +27,14 @@ public class CarDetails extends WearableActivity {
         Button startButton = findViewById(R.id.precondition);
         startButton.setOnClickListener(view -> {
             final TextView status = findViewById(R.id.status);
-            mApi.startPrecondition(QueueSingleton.getQueue(), mApi.getCurrentVin()).
-                    subscribe(result -> runOnUiThread(() -> {
-                        status.setText(R.string.started_condition);
-                    }), error -> runOnUiThread(() -> {
-                        Log.e("Conditioning", "Unable to pre-condition car", error);
-                        status.setText(R.string.error_conditioning);
-                    }));
+            mApi.get(0).startPrecondition(QueueSingleton.getQueue()).
+                    subscribe(
+                            result -> runOnUiThread(() -> status.setText(R.string.started_condition)),
+                            error -> runOnUiThread(() -> {
+                                Log.e("Conditioning", "Unable to pre-condition car", error);
+                                status.setText(R.string.error_conditioning);
+                            })
+                    );
         });
     }
 
@@ -39,7 +42,7 @@ public class CarDetails extends WearableActivity {
     protected void onStart() {
         super.onStart();
 
-        AuthenticatedApi intentApi = getIntent().getParcelableExtra("api");
+        List<Vehicle> intentApi = getIntent().getParcelableExtra("api");
         if (intentApi == null) {
             if (mApi == null) {
                 Intent startIntent = new Intent(this, MainActivity.class);

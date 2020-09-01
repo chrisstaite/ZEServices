@@ -15,10 +15,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.yourdreamnet.zecommon.api.Vehicle;
 import com.yourdreamnet.zeservices.MainActivity;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
-import com.yourdreamnet.zecommon.api.AuthenticatedApi;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -38,7 +38,7 @@ public class ConditioningFragment extends Fragment {
         return inflater.inflate(R.layout.conditioning_fragment, container, false);
     }
 
-    private AuthenticatedApi getApi() {
+    private Vehicle getApi() {
         return ((MainActivity) getActivity()).getApi();
     }
 
@@ -49,8 +49,13 @@ public class ConditioningFragment extends Fragment {
     }
 
     private void updateStatus() {
-        AuthenticatedApi api = getApi();
-        api.preconditionStatus(QueueSingleton.getQueue(), api.getCurrentVin()).
+        Vehicle api = getApi();
+        if (api == null) {
+            return;
+        }
+        // TODO: Port to new API
+        /*
+        api.preconditionStatus(QueueSingleton.getQueue()).
             subscribe(result -> {
                 mViewModel.setConditioningData(result);
                 getActivity().runOnUiThread(() -> {
@@ -69,7 +74,7 @@ public class ConditioningFragment extends Fragment {
                 Log.e("Conditioning", "Error getting last scheduled time", error);
                 TextView lastScheduled = getView().findViewById(R.id.last_scheduled);
                 lastScheduled.setText("");
-            });
+            });*/
     }
 
     @Override
@@ -78,9 +83,8 @@ public class ConditioningFragment extends Fragment {
         mViewModel = ViewModelProviders.of(this).get(ConditioningViewModel.class);
 
         Button condition = getView().findViewById(R.id.start_conditioning);
-        AuthenticatedApi api = getApi();
         condition.setOnClickListener(
-            view -> api.startPrecondition(QueueSingleton.getQueue(), api.getCurrentVin()).
+            view -> getApi().startPrecondition(QueueSingleton.getQueue()).
                 subscribe(result -> Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                     TextView status = getView().findViewById(R.id.status);
                     status.setText(R.string.started_condition);

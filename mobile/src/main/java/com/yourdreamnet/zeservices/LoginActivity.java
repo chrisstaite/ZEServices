@@ -17,15 +17,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
 
+import com.android.volley.RequestQueue;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.yourdreamnet.zecommon.CredentialStore;
-import com.yourdreamnet.zecommon.api.AuthenticatedApi;
+import com.yourdreamnet.zecommon.api.MyRenaultConfig;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
-import com.yourdreamnet.zecommon.api.ZEServicesApi;
+import com.yourdreamnet.zecommon.api.VehicleAccount;
 
 /**
  * A login screen that offers login via email/password.
@@ -40,7 +41,7 @@ public class LoginActivity extends Activity {
     private Switch mSaveSwitch;
 
     private CredentialStore mStore;
-    private AuthenticatedApi mCachedApi;
+    private VehicleAccount mCachedApi;
     private boolean mIsPaused;
 
     @Override
@@ -85,7 +86,7 @@ public class LoginActivity extends Activity {
 
     private void goToRegistration() {
         Intent browserIntent = new Intent(
-            Intent.ACTION_VIEW, Uri.parse("https://www.services.renault-ze.com/user/registration")
+            Intent.ACTION_VIEW, Uri.parse("https://my.renault.co.uk/login-signup.html")
         );
         startActivity(browserIntent);
     }
@@ -175,7 +176,7 @@ public class LoginActivity extends Activity {
         }
     }
 
-    private void loginComplete(AuthenticatedApi api) {
+    private void loginComplete(VehicleAccount api) {
         runOnUiThread(() -> {
             showProgress(false);
             Intent startIntent = new Intent(this, MainActivity.class);
@@ -205,31 +206,55 @@ public class LoginActivity extends Activity {
 
     private void login(String email, String password, boolean save) {
         showProgress(true);
-        new ZEServicesApi(email, password).
-            getAuthenticated(QueueSingleton.getQueue()).
-            subscribe(
-                api -> {
-                    if (save) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            mStore.saveLoginSecure(email, password);
-                        } else {
-                            mStore.saveLoginInsecure(email, password);
-                        }
-                    }
-                    saveToWearable(email, password);
-                    if (mIsPaused) {
-                        mCachedApi = api;
-                    } else {
-                        loginComplete(api);
-                    }
-                },
+        RequestQueue queue = QueueSingleton.getQueue();
+        MyRenaultConfig.Companion.getConfig(QueueSingleton.getQueue()).subscribe(
+                config -> config.getVehicleApi(queue, email, password).subscribe(
+                        api -> api.getAccounts(queue).subscribe(
+                                accounts -> {
+                                    if (accounts.size() == 0) {
+                                        Log.e("LoginActivity", "No accounts found");
+                                        showProgress(false);
+                                        mEmailView.setError(getString(R.string.error_no_accounts));
+                                        mEmailView.requestFocus();
+                                        return;
+                                    } else if (accounts.size() > 1) {
+                                        Log.w("LoginActivity", "Multiple accounts found, picking first");
+                                    }
+                                    if (save) {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                            mStore.saveLoginSecure(email, password);
+                                        } else {
+                                            mStore.saveLoginInsecure(email, password);
+                                        }
+                                    }
+                                    saveToWearable(email, password);
+                                    if (mIsPaused) {
+                                        mCachedApi = accounts.get(0);
+                                    } else {
+                                        loginComplete(accounts.get(0));
+                                    }
+                                },
+                                error -> runOnUiThread(() -> {
+                                    Log.e("LoginActivity", "Unable to find accounts", error);
+                                    showProgress(false);
+                                    mEmailView.setError(getString(R.string.error_load_accounts));
+                                    mEmailView.requestFocus();
+                                })
+                        ),
+                        error -> runOnUiThread(() -> {
+                            Log.e("LoginActivity", "Unable to authenticate", error);
+                            showProgress(false);
+                            mEmailView.setError(getString(R.string.error_invalid_email));
+                            mEmailView.requestFocus();
+                        })
+                ),
                 error -> runOnUiThread(() -> {
-                    Log.e("LoginActivity", "Unable to authenticate", error);
+                    Log.e("LoginActivity", "Unable to load config", error);
                     showProgress(false);
-                    mEmailView.setError(getString(R.string.error_invalid_email));
+                    mEmailView.setError(getString(R.string.error_no_config));
                     mEmailView.requestFocus();
                 })
-            );
+        );
     }
 
     private boolean isEmailValid(String email) {

@@ -62,8 +62,6 @@ public class MainTabManager extends FragmentPagerAdapter {
         SpannableString sb = new SpannableString(mContext.getString(string));
         Drawable image = mContext.getResources().getDrawable(icon);
         image.setBounds(0, 0, image.getIntrinsicWidth(), image.getIntrinsicHeight());
-        //ImageSpan imageSpan = new ImageSpan(image, ImageSpan.ALIGN_BOTTOM);
-        //sb.setSpan(imageSpan, 0, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         return sb;
     }
 

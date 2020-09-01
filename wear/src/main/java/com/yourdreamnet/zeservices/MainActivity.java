@@ -2,7 +2,6 @@ package com.yourdreamnet.zeservices;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
@@ -10,6 +9,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.android.volley.RequestQueue;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
@@ -21,8 +21,8 @@ import com.google.android.gms.wearable.NodeClient;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.yourdreamnet.zecommon.CredentialStore;
+import com.yourdreamnet.zecommon.api.MyRenaultConfig;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
-import com.yourdreamnet.zecommon.api.ZEServicesApi;
 
 import java.util.Iterator;
 import java.util.List;
@@ -112,28 +112,39 @@ public class MainActivity extends WearableActivity implements DataClient.OnDataC
         progress.setVisibility(View.GONE);
     }
 
-
-
     private void credentialsTransferred(CredentialStore.Credentials credentials) {
         final TextView loadingText = findViewById(R.id.loading_text);
         loadingText.setText(R.string.login_complete);
         ProgressBar progress = findViewById(R.id.progressBar);
         progress.setVisibility(View.GONE);
 
-        new ZEServicesApi(credentials.email(), credentials.password()).
-                getAuthenticated(QueueSingleton.getQueue()).
-                subscribe(
-                        api -> runOnUiThread(() -> {
-                            Intent startIntent = new Intent(this, CarDetails.class);
-                            startIntent.putExtra("api", api);
-                            startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                            startActivity(startIntent);
-                        }),
+        RequestQueue queue = QueueSingleton.getQueue();
+        MyRenaultConfig.Companion.getConfig(queue).subscribe(
+                config -> config.getVehicleApi(queue, credentials.email(), credentials.password()).subscribe(
+                        api -> api.getAccounts(queue).subscribe(
+                                accounts -> accounts.get(0).getVehicles(queue).subscribe(
+                                        vehicles -> runOnUiThread(() -> {
+                                            Intent startIntent = new Intent(this, CarDetails.class);
+                                            startIntent.putExtra("api", api);
+                                            startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                                            startActivity(startIntent);
+                                        }),
+                                        error -> runOnUiThread(() -> {
+                                            Log.e("LoginActivity", "Unable to authenticate", error);
+                                            loadingText.setText(R.string.login_invalid);
+                                        })
+                                ),
+                                error -> runOnUiThread(() -> {
+                                    Log.e("LoginActivity", "Unable to authenticate", error);
+                                    loadingText.setText(R.string.login_invalid);
+                                })
+                        ),
                         error -> runOnUiThread(() -> {
                             Log.e("LoginActivity", "Unable to authenticate", error);
                             loadingText.setText(R.string.login_invalid);
                         })
-                );
+                )
+        );
     }
 
     @Override

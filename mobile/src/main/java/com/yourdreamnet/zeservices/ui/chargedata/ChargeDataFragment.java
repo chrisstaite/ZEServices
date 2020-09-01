@@ -19,10 +19,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
+import com.yourdreamnet.zecommon.api.Vehicle;
 import com.yourdreamnet.zeservices.MainActivity;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
-import com.yourdreamnet.zecommon.api.AuthenticatedApi;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -109,7 +109,7 @@ public class ChargeDataFragment extends Fragment {
         dataList.setAdapter(new ChargeDataAdapter(mViewModel));
     }
 
-    private AuthenticatedApi getApi() {
+    private Vehicle getApi() {
         return ((MainActivity) getActivity()).getApi();
     }
 
@@ -119,8 +119,13 @@ public class ChargeDataFragment extends Fragment {
     }
 
     private void loadChargeData(int month, int year) {
-        AuthenticatedApi api = getApi();
-        api.getChargeHistory(QueueSingleton.getQueue(), api.getCurrentVin(), month, year).
+        Vehicle api = getApi();
+        if (api == null) {
+            return;
+        }
+        // TODO: Port to new API
+        /*
+        api.getChargeHistory(QueueSingleton.getQueue(), month, year).
             subscribe(
                 data -> {
                     mViewModel.setChargeData(data);
@@ -131,7 +136,7 @@ public class ChargeDataFragment extends Fragment {
                     mViewModel.clearChargeData();
                     getActivity().runOnUiThread(this::renderList);
                 }
-            );
+            );*/
     }
 
 }

@@ -1,10 +1,13 @@
 package com.yourdreamnet.zeservices.ui.carstatus;
 
+import android.annotation.SuppressLint;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import androidx.lifecycle.ViewModel;
@@ -20,13 +23,20 @@ public class CarStatusViewModel extends ViewModel {
     private Date mLastUpdated;
     private boolean mRangeMiles = true;
 
+    @SuppressLint("SimpleDateFormat")
     boolean setBatteryData(JSONObject batteryData) {
         try {
-            mCharging = batteryData.getBoolean("charging");
-            mPluggedIn = batteryData.getBoolean("plugged");
-            mChargeLevel = batteryData.getInt("charge_level");
-            mRangeKm = batteryData.getInt("remaining_range");
-            mLastUpdated = new Date(batteryData.getLong("last_update"));
+            mCharging = batteryData.getInt("chargeStatus") == 1;
+            mPluggedIn = batteryData.getInt("plugStatus") == 1;
+            mChargeLevel = batteryData.getInt("batteryLevel");
+            mRangeKm = batteryData.getInt("batteryAutonomy");
+            try {
+                mLastUpdated = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse(
+                        batteryData.getString("lastUpdateTime")
+                );
+            } catch (ParseException e) {
+                mLastUpdated = new Date();
+            }
             return true;
         } catch (JSONException e) {
             Log.e("CarStatus", "Unable to parse battery data", e);
