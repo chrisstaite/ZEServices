@@ -26,13 +26,13 @@ public class CarStatusViewModel extends ViewModel {
     @SuppressLint("SimpleDateFormat")
     boolean setBatteryData(JSONObject batteryData) {
         try {
-            mCharging = batteryData.getInt("chargeStatus") == 1;
+            mCharging = batteryData.getInt("chargingStatus") == 1;
             mPluggedIn = batteryData.getInt("plugStatus") == 1;
             mChargeLevel = batteryData.getInt("batteryLevel");
             mRangeKm = batteryData.getInt("batteryAutonomy");
             try {
                 mLastUpdated = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse(
-                        batteryData.getString("lastUpdateTime")
+                        batteryData.getString("timestamp")
                 );
             } catch (ParseException e) {
                 mLastUpdated = new Date();

@@ -41,7 +41,7 @@ class VehicleApi(config: MyRenaultConfig, cookie: String, personId: String) : Pa
                     }
                 }, Response.ErrorListener { error: VolleyError? ->
             result.onErrorResponse(error)
-            Log.e("ZEServicesApi", "Bad response to kamereon request (API Key: ${_config._kamareonApi}, Gigya Token: $token)", error)
+            Log.e("ZEServicesApi", "Bad response to kamereon request", error)
         }) {
             override fun getBodyContentType(): String {
                 return "application/vnd.api+json";

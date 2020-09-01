@@ -94,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
         drawer.addDrawerListener(toggle);
 
         ViewPager pager = findViewById(R.id.container);
-        pager.setAdapter(new MainTabManager(getSupportFragmentManager(), this));
 
         RequestQueue queue = QueueSingleton.getQueue();
         mAuthenticatedApi.getVehicles(queue).subscribe(
@@ -109,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
                             drawer.openDrawer(GravityCompat.START, true);
                         } else {
                             Log.i("MainActivity", "Reloading main tab");
-                            pager.setCurrentItem(-1);
+                            pager.setAdapter(new MainTabManager(getSupportFragmentManager(), this));
                         }
                     });
                 },
@@ -134,8 +133,10 @@ public class MainActivity extends AppCompatActivity {
             if (mSelected != item.getOrder())
             {
                 mSelected = item.getOrder();
-                drawer.closeDrawers();
+                ViewPager pager = findViewById(R.id.container);
+                pager.setAdapter(new MainTabManager(getSupportFragmentManager(), this));
             }
+            drawer.closeDrawers();
             return true;
         });
     }
