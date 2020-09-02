@@ -24,6 +24,8 @@ import com.yourdreamnet.zeservices.MainActivity;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
 
+import org.json.JSONException;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -123,20 +125,27 @@ public class ChargeDataFragment extends Fragment {
         if (api == null) {
             return;
         }
-        // TODO: Port to new API
-        /*
-        api.getChargeHistory(QueueSingleton.getQueue(), month, year).
+        Calendar cal = Calendar.getInstance();
+        cal.set(year, month - 1, 1);
+        Date start = cal.getTime();
+        cal.add(Calendar.MONTH, 1);
+        Date end = cal.getTime();
+        api.getChargeHistory(QueueSingleton.getQueue(), start, end).
             subscribe(
                 data -> {
-                    mViewModel.setChargeData(data);
-                    getActivity().runOnUiThread(this::renderList);
+                    try {
+                        mViewModel.setChargeData(data.getJSONArray("charges"));
+                        getActivity().runOnUiThread(this::renderList);
+                    } catch (JSONException e) {
+                        Log.e("ChargeData", "Unable to get charges", e);
+                    }
                 },
                 error -> {
                     Log.e("ChargeData", "Unable to load charge history", error);
                     mViewModel.clearChargeData();
                     getActivity().runOnUiThread(this::renderList);
                 }
-            );*/
+            );
     }
 
 }

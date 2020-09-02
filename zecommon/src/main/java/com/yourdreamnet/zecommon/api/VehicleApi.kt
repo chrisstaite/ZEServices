@@ -4,6 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
 import com.android.volley.*
+import com.android.volley.toolbox.HttpHeaderParser
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.RequestFuture
 import org.json.JSONArray
@@ -12,6 +13,7 @@ import org.json.JSONObject
 import rx.Observable
 import rx.schedulers.Schedulers
 import rx.subjects.AsyncSubject
+import java.nio.charset.Charset
 
 class VehicleApi(config: MyRenaultConfig, cookie: String, personId: String) : Parcelable
 {
@@ -40,11 +42,20 @@ class VehicleApi(config: MyRenaultConfig, cookie: String, personId: String) : Pa
                         result.onErrorResponse(VolleyError("Unable to parse response", e))
                     }
                 }, Response.ErrorListener { error: VolleyError? ->
-            result.onErrorResponse(error)
-            Log.e("ZEServicesApi", "Bad response to kamereon request", error)
-        }) {
+                    result.onErrorResponse(error)
+                    val response = error?.networkResponse
+                    var responseData = "";
+                    if (response != null) {
+                        responseData = String(
+                                response.data,
+                                Charset.forName(HttpHeaderParser.parseCharset(response.headers, "utf-8"))
+                        )
+                    }
+                    Log.e("ZEServicesApi", "Bad response to kamereon request: $responseData", error)
+                }
+        ) {
             override fun getBodyContentType(): String {
-                return "application/vnd.api+json";
+                return "application/vnd.api+json"
             }
 
             override fun getHeaders(): MutableMap<String, String> {
@@ -95,7 +106,7 @@ class VehicleApi(config: MyRenaultConfig, cookie: String, personId: String) : Pa
                 Request.Method.GET,
                 "/commerce/v1/persons/$_personId?country=${_config.country()}",
                 null
-            ).
+        ).
             map { response -> response.getJSONArray("accounts") }.
             map { accounts -> toAccountList(accounts) }.
             asObservable()

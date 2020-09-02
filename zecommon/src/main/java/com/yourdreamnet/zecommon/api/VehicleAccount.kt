@@ -19,7 +19,13 @@ class VehicleAccount(api: VehicleApi, accountId: String, country: String) : Parc
 
     internal fun request(queue: RequestQueue, method: Int, route: String, parameters: JSONObject?): Observable<JSONObject>
     {
-        return _api.kamareonRequest(queue, method, "/commerce/v1/accounts/$_accountId$route?country=$_country", parameters)
+        val combiner = if (route.contains('?')) '&' else '?'
+        return _api.kamareonRequest(
+                queue,
+                method,
+                "/commerce/v1/accounts/$_accountId$route${combiner}country=$_country",
+                parameters
+        )
     }
 
     private fun toVehicleList(vehicles: JSONArray): List<Vehicle>

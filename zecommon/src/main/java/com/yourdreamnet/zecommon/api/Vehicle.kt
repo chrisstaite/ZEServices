@@ -1,9 +1,12 @@
 package com.yourdreamnet.zecommon.api
 
+import android.annotation.SuppressLint
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import org.json.JSONObject
 import rx.Observable
+import java.text.SimpleDateFormat
+import java.util.*
 
 class Vehicle(account: VehicleAccount, vin: String, registration: String) {
 
@@ -52,6 +55,13 @@ class Vehicle(account: VehicleAccount, vin: String, registration: String) {
     fun getMilage(queue: RequestQueue): Observable<JSONObject>
     {
         return get(queue, "/cockpit", 2)
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getChargeHistory(queue: RequestQueue, from: Date, to: Date): Observable<JSONObject>
+    {
+        val format = SimpleDateFormat("yyyyMMdd")
+        return get(queue, "/charges?start=" + format.format(from) + "&end=" + format.format(to))
     }
 
     fun startPrecondition(queue: RequestQueue): Observable<JSONObject>
