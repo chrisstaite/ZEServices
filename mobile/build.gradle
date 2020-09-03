@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     defaultConfig {
         applicationId "com.yourdreamnet.zeservices"
         minSdkVersion 19
-        targetSdkVersion 28
-        versionCode 15
-        versionName "1.0.1"
+        targetSdkVersion 30
+        versionCode 21
+        versionName "2.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
