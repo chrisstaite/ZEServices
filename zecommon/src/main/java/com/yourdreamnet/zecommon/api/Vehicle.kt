@@ -77,7 +77,7 @@ class Vehicle(account: VehicleAccount, vin: String, registration: String) {
                                         "targetTemperature" to 21
                                 )
                         )
-                ))
+                ) as Map<String, Object>)
         )
     }
 
@@ -93,7 +93,7 @@ class Vehicle(account: VehicleAccount, vin: String, registration: String) {
                                         "action" to "start"
                                 )
                         )
-                ))
+                ) as Map<String, Object>)
         )
     }
 

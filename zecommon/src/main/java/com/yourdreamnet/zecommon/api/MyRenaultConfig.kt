@@ -75,7 +75,6 @@ class MyRenaultConfig(kamareonUrl: String, kamareonApi: String, gigyaUrl: String
         fun getConfig(queue: RequestQueue): Observable<MyRenaultConfig> {
             val result = RequestFuture.newFuture<MyRenaultConfig>()
             val o = Observable.from(result, Schedulers.io())
-
             val configRequest: JsonObjectRequest = object : JsonObjectRequest(
                     Request.Method.GET,
                     CONFIG_URL.replace("{LOCALE}", LOCALE),
@@ -85,7 +84,8 @@ class MyRenaultConfig(kamareonUrl: String, kamareonApi: String, gigyaUrl: String
                             val servers = response.getJSONObject("servers")
                             val kamareon = servers.getJSONObject("wiredProd")
                             val kamareonUrl = kamareon.getString("target")
-                            val kamareonApi = kamareon.getString("apikey")
+                            //val kamareonApi = kamareon.getString("apikey")
+                            val kamareonApi = "Ae9FDWugRxZQAGm3Sxgk7uJn6Q4CGEA2"
                             val gigya = servers.getJSONObject("gigyaProd")
                             val gigyaUrl = gigya.getString("target")
                             val gigyaApi = gigya.getString("apikey")
@@ -106,7 +106,6 @@ class MyRenaultConfig(kamareonUrl: String, kamareonApi: String, gigyaUrl: String
             )
             result.setRequest(configRequest)
             queue.add(configRequest)
-
             return o
         }
     }

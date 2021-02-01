@@ -6,8 +6,8 @@ android {
         applicationId "com.yourdreamnet.zeservices"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 10010
-        versionName "2.0"
+        versionCode 10011
+        versionName "2.1"
     }
     buildTypes {
         release {
