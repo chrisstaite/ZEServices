@@ -54,12 +54,19 @@ public class CarStatusFragment extends Fragment {
     }
 
     private void setLoading(boolean loading) {
-        ProgressBar progress = Objects.requireNonNull(getView()).findViewById(R.id.loading);
-        ConstraintLayout layout = getView().findViewById(R.id.layout);
+        View view = getView();
+        if (view == null) {
+            return;
+        }
+        ProgressBar progress = view.findViewById(R.id.loading);
+        ConstraintLayout layout = view.findViewById(R.id.layout);
+        if (progress == null || layout == null) {
+            return;
+        }
         for (int i = 0; i < layout.getChildCount(); i++) {
-            View view = layout.getChildAt(i);
-            if (view != progress) {
-                view.setVisibility(loading ? View.GONE : View.VISIBLE);
+            View childView = layout.getChildAt(i);
+            if (childView != progress) {
+                childView.setVisibility(loading ? View.GONE : View.VISIBLE);
             }
         }
         progress.setVisibility(loading ? View.VISIBLE : View.GONE);

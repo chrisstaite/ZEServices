@@ -95,7 +95,8 @@ public class LoginActivity extends Activity {
     public void onStart() {
         super.onStart();
 
-        if (getIntent().getBooleanExtra("logout", false)) {
+        Intent intent = getIntent();
+        if (intent != null && intent.getBooleanExtra("logout", false)) {
             // Delete the shared preferences and cancel any cached login
             mCachedApi = null;
             clearWearable();

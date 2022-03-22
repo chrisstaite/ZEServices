@@ -6,8 +6,8 @@ android {
         applicationId "com.yourdreamnet.zeservices"
         minSdkVersion 19
         targetSdkVersion 31
-        versionCode 23
-        versionName "2.2.0"
+        versionCode 24
+        versionName "2.2.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

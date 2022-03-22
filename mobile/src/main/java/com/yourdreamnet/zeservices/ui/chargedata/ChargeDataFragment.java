@@ -116,8 +116,19 @@ public class ChargeDataFragment extends Fragment {
     }
 
     private void renderList() {
-        RecyclerView dataList = getView().findViewById(R.id.data_list);
-        dataList.getAdapter().notifyDataSetChanged();
+        View view = getView();
+        if (view == null) {
+            return;
+        }
+        RecyclerView dataList = view.findViewById(R.id.data_list);
+        if (dataList == null) {
+            return;
+        }
+        RecyclerView.Adapter adapter = dataList.getAdapter();
+        if (adapter == null) {
+            return;
+        }
+        adapter.notifyDataSetChanged();
     }
 
     private void loadChargeData(int month, int year) {

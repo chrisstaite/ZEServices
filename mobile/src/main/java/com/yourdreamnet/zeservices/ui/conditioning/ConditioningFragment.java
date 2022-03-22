@@ -20,8 +20,6 @@ import com.yourdreamnet.zeservices.MainActivity;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
 
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.Objects;
 
 public class ConditioningFragment extends Fragment {
@@ -86,12 +84,20 @@ public class ConditioningFragment extends Fragment {
         condition.setOnClickListener(
             view -> getApi().startPrecondition(QueueSingleton.getQueue()).
                 subscribe(result -> Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-                    TextView status = getView().findViewById(R.id.status);
+                    View fragment = getView();
+                    if (fragment == null) {
+                        return;
+                    }
+                    TextView status = fragment.findViewById(R.id.status);
                     status.setText(R.string.started_condition);
                     updateStatus();
                 }), error -> Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                     Log.e("Conditioning", "Unable to pre-condition car", error);
-                    TextView status = getView().findViewById(R.id.status);
+                    View fragment = getView();
+                    if (fragment == null) {
+                        return;
+                    }
+                    TextView status = fragment.findViewById(R.id.status);
                     status.setText(R.string.error_conditioning);
                 })
             )
