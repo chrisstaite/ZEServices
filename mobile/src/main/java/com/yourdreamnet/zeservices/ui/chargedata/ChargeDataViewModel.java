@@ -8,9 +8,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import androidx.lifecycle.ViewModel;
 
@@ -18,110 +21,49 @@ public class ChargeDataViewModel extends ViewModel {
 
     private List<ChargeNotification> mNotifications;
 
-    public enum ChargeType {
-        Start("START_NOTIFICATION", R.string.started_charge),
-        End("END_NOTIFICATION", R.string.ended_charge),
-        Unknown("", R.string.unknown);
-
-        private String mName;
-        private int mResource;
-
-        ChargeType(String name, int resource) {
-            mName = name;
-            mResource = resource;
-        }
-
-        int getResource() {
-            return mResource;
-        }
-
-        static ChargeType getType(String name) {
-            for (ChargeType type : ChargeType.values()) {
-                if (type.mName.equals(name)) {
-                    return type;
-                }
-            }
-            return Unknown;
-        }
-    }
-
-    public enum PointType {
-        Accelerated("ACCELERATED", R.string.accelerated),
-        Invalid("INVALID", R.string.invalid),
-        Slow("SLOW", R.string.slow),
-        Unknown("", R.string.unknown);
-
-        private String mName;
-        private int mResource;
-
-        PointType(String name, int resource) {
-            mName = name;
-            mResource = resource;
-        }
-
-        int getResource() {
-            return mResource;
-        }
-
-        static PointType getType(String name) {
-            for (PointType type : PointType.values()) {
-                if (type.mName.equals(name)) {
-                    return type;
-                }
-            }
-            return Unknown;
-        }
-    }
-
     static class ChargeNotification {
 
         private Date mDate;
-        private ChargeType mType;
-        private PointType mPoint;
+        private Date mEndDate;
+        private int mDuration;
         private int mLevelPercentage;
-        private int mRangeKm;
-        private Date mEstimatedFinish;
+        private String mEndStatus;
 
         private ChargeNotification(JSONObject notification) throws JSONException {
-            mDate = new Date(notification.getLong("date"));
-            mType = ChargeType.getType(notification.getString("type"));
-            mPoint = PointType.getType(notification.getString("charging_point"));
-            mLevelPercentage = notification.getInt("charge_level");
-            mRangeKm = notification.getInt("remaining_autonomy");
-            if (mType == ChargeType.Start) {
-                try {
-                    mEstimatedFinish = new Date(mDate.getTime() + notification.getLong("remaining_time"));
-                } catch (JSONException e) {
-                    // This is a weird edge-case, but it does happen
-                    mEstimatedFinish = null;
-                }
-            } else {
-                mEstimatedFinish = null;
+            SimpleDateFormat dateParser = new SimpleDateFormat(
+                    "yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()
+            );
+            try {
+                mDate = dateParser.parse(notification.getString("chargeStartDate"));
+            } catch (ParseException e) {
+                mDate = null;
             }
+            try {
+                mEndDate = dateParser.parse(notification.getString("chargeEndDate"));
+            } catch (ParseException e) {
+                mEndDate = null;
+            }
+            mDuration = notification.getInt("chargeDuration");
+            mLevelPercentage = notification.getInt("chargeEndBatteryLevel");
+            mEndStatus = notification.getString("chargeEndStatus");
         }
 
         public Date getDate() {
             return mDate;
         }
 
-        public ChargeType getType() {
-            return mType;
+        public int getDuration() {
+            return mDuration;
         }
 
-        public PointType getPoint() {
-            return mPoint;
-        }
+        public String getEndStatus() { return mEndStatus; }
 
         public int getLevelPercentage() {
             return mLevelPercentage;
         }
 
-        public int getRangeKm() {
-            return mRangeKm;
-        }
-
-        public Date getEstimatedFinish() {
-            return mEstimatedFinish;
+        public Date getEndDate() {
+            return mEndDate;
         }
 
     }

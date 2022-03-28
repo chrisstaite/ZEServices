@@ -1,6 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        debug {
+            storeFile file('/Users/chris/StudioProjects/ZEServices/release.keystore')
+            storePassword 'Vkqroz93!'
+            keyAlias 'key0'
+            keyPassword 'Vkqroz93!'
+        }
+    }
     compileSdkVersion 31
     defaultConfig {
         applicationId "com.yourdreamnet.zeservices"
@@ -31,7 +39,7 @@ dependencies {
     implementation 'androidx.core:core:1.7.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation project(':zecommon')
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.4.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     wearApp project(':wear')

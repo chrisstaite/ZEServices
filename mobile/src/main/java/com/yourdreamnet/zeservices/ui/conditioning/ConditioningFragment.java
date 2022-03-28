@@ -20,6 +20,8 @@ import com.yourdreamnet.zeservices.MainActivity;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
 import com.yourdreamnet.zeservices.R;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.Objects;
 
 public class ConditioningFragment extends Fragment {
@@ -51,8 +53,6 @@ public class ConditioningFragment extends Fragment {
         if (api == null) {
             return;
         }
-        // TODO: Port to new API
-        /*
         api.preconditionStatus(QueueSingleton.getQueue()).
             subscribe(result -> {
                 mViewModel.setConditioningData(result);
@@ -72,7 +72,7 @@ public class ConditioningFragment extends Fragment {
                 Log.e("Conditioning", "Error getting last scheduled time", error);
                 TextView lastScheduled = getView().findViewById(R.id.last_scheduled);
                 lastScheduled.setText("");
-            });*/
+            });
     }
 
     @Override

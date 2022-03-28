@@ -64,6 +64,11 @@ class Vehicle(account: VehicleAccount, vin: String, registration: String) {
         return get(queue, "/charges?start=" + format.format(from) + "&end=" + format.format(to))
     }
 
+    fun preconditionStatus(queue: RequestQueue): Observable<JSONObject>
+    {
+        return get(queue, "/hvac-status");
+    }
+
     fun startPrecondition(queue: RequestQueue): Observable<JSONObject>
     {
         return post(

@@ -33,17 +33,17 @@ public class ChargeDataAdapter extends RecyclerView.Adapter<ChargeDataAdapter.Vi
             String lastUpdated = timeFormat.format(item.getDate()) + " " + dateFormat.format(item.getDate());
             timestamp.setText(lastUpdated);
 
-            TextView type = mView.findViewById(R.id.type);
-            type.setText(item.getType().getResource());
+            //TextView type = mView.findViewById(R.id.type);
+            //type.setText(item.getEndStatus());
 
-            TextView point = mView.findViewById(R.id.point);
-            point.setText(item.getPoint().getResource());
+            //TextView point = mView.findViewById(R.id.point);
+            //point.setText(item.getDuration());
 
             TextView chargeLevel = mView.findViewById(R.id.charge_level);
             chargeLevel.setText(String.format(mView.getContext().getString(R.string.charging_percentage), item.getLevelPercentage()));
 
             TextView completeTime = mView.findViewById(R.id.complete_time);
-            Date finish = item.getEstimatedFinish();
+            Date finish = item.getEndDate();
             completeTime.setText(finish == null ? "" : timeFormat.format(finish));
         }
 
