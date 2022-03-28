@@ -1,5 +1,6 @@
 package com.yourdreamnet.zeservices.ui.carstatus;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -73,7 +74,11 @@ public class CarStatusFragment extends Fragment {
     }
 
     private void goToLogin() {
-        Intent loginIntent = new Intent(getContext(), LoginActivity.class);
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        Intent loginIntent = new Intent(context, LoginActivity.class);
         loginIntent.setFlags(loginIntent.getFlags() | Intent.FLAG_ACTIVITY_NO_HISTORY);
         startActivity(loginIntent);
     }
