@@ -19,19 +19,17 @@ import java.io.UnsupportedEncodingException
 import java.nio.charset.Charset
 import java.util.*
 
-class MyRenaultConfig(kamareonUrl: String, kamareonApi: String, gigyaUrl: String, gigyaApi: String) : Parcelable
+class MyRenaultConfig(val _kamareonUrl: String,
+                      val _kamareonApi: String,
+                      private val _gigyaUrl: String,
+                      private val _gigyaApi: String) : Parcelable
 {
-    internal val _kamareonUrl = kamareonUrl
-    internal val _kamareonApi = kamareonApi
-    private val _gigyaUrl = gigyaUrl
-    private val _gigyaApi = gigyaApi
 
     constructor(parcel: Parcel) : this(
             parcel.readString()!!,
             parcel.readString()!!,
             parcel.readString()!!,
-            parcel.readString()!!
-    )
+            parcel.readString()!!)
 
     class JwtCache(cookie: String, token: String) {
         private val _cookie = cookie
@@ -76,7 +74,7 @@ class MyRenaultConfig(kamareonUrl: String, kamareonApi: String, gigyaUrl: String
             val result = RequestFuture.newFuture<MyRenaultConfig>()
             val o = Observable.from(result, Schedulers.io())
             val configRequest: JsonObjectRequest = object : JsonObjectRequest(
-                    Request.Method.GET,
+                    Method.GET,
                     CONFIG_URL.replace("{LOCALE}", LOCALE),
                     null,
                     Response.Listener { response: JSONObject ->
@@ -125,7 +123,7 @@ class MyRenaultConfig(kamareonUrl: String, kamareonApi: String, gigyaUrl: String
             )
     {
         override fun getBodyContentType(): String {
-            return "application/x-www-form-urlencoded";
+            return "application/x-www-form-urlencoded"
         }
 
         override fun parseNetworkResponse(response: NetworkResponse): Response<JSONObject> {
@@ -150,7 +148,7 @@ class MyRenaultConfig(kamareonUrl: String, kamareonApi: String, gigyaUrl: String
         val result = RequestFuture.newFuture<JSONObject>()
         val o = Observable.from(result, Schedulers.io())
 
-        val builder = Uri.Builder();
+        val builder = Uri.Builder()
         for ((key, value) in parameters) {
             builder.appendQueryParameter(key, value)
         }

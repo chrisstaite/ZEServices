@@ -15,11 +15,10 @@ import rx.schedulers.Schedulers
 import rx.subjects.AsyncSubject
 import java.nio.charset.Charset
 
-class VehicleApi(config: MyRenaultConfig, cookie: String, personId: String) : Parcelable
+class VehicleApi(private val _config: MyRenaultConfig,
+                 private val _cookie: String,
+                 private val _personId: String) : Parcelable
 {
-    private val _config = config
-    private val _cookie = cookie
-    private val _personId = personId
 
     constructor(parcel: Parcel) : this(
             MyRenaultConfig(parcel), parcel.readString()!!, parcel.readString()!!

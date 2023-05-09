@@ -4,6 +4,7 @@
     <string name="load_failed">Please login on your phone then re-open</string>
     <string name="login_complete">Loaded credentials from the phone, logging in</string>
     <string name="login_invalid">Invalid login, please check details on phone</string>
+    <string name="rate_limit">You have been rate limited, try again later</string>
     <string name="precondition_button">Start Precondition</string>
     <string name="started_condition">Precondition started</string>
     <string name="error_conditioning">Error sending</string>

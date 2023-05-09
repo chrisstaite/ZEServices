@@ -10,11 +10,9 @@ import android.widget.TextView;
 import com.yourdreamnet.zecommon.api.QueueSingleton;
 import com.yourdreamnet.zecommon.api.Vehicle;
 
-import java.util.List;
-
 public class CarDetails extends WearableActivity {
 
-    private List<Vehicle> mApi;
+    private Vehicle mApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +25,7 @@ public class CarDetails extends WearableActivity {
         Button startButton = findViewById(R.id.precondition);
         startButton.setOnClickListener(view -> {
             final TextView status = findViewById(R.id.status);
-            mApi.get(0).startPrecondition(QueueSingleton.getQueue()).
+            mApi.startPrecondition(QueueSingleton.getQueue()).
                     subscribe(
                             result -> runOnUiThread(() -> status.setText(R.string.started_condition)),
                             error -> runOnUiThread(() -> {
@@ -42,7 +40,7 @@ public class CarDetails extends WearableActivity {
     protected void onStart() {
         super.onStart();
 
-        List<Vehicle> intentApi = getIntent().getParcelableExtra("api");
+        Vehicle intentApi = getIntent().getParcelableExtra("api");
         if (intentApi == null) {
             if (mApi == null) {
                 Intent startIntent = new Intent(this, MainActivity.class);

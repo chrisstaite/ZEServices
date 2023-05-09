@@ -1,6 +1,8 @@
 package com.yourdreamnet.zecommon.api
 
 import android.annotation.SuppressLint
+import android.os.Parcel
+import android.os.Parcelable
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import org.json.JSONObject
@@ -8,11 +10,12 @@ import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.*
 
-class Vehicle(account: VehicleAccount, vin: String, registration: String) {
+class Vehicle(private val _account: VehicleAccount,
+              private val _vin: String,
+              private val _registration: String) : Parcelable {
 
-    private val _account = account
-    private val _vin = vin
-    private val _registration = registration
+    constructor(parcel: Parcel) : this(
+        VehicleAccount(parcel), parcel.readString()!!, parcel.readString()!!)
 
     fun vin(): String
     {
@@ -100,6 +103,26 @@ class Vehicle(account: VehicleAccount, vin: String, registration: String) {
                         )
                 ) as Map<String, Object>)
         )
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        _account.writeToParcel(parcel, flags)
+        parcel.writeString(_vin)
+        parcel.writeString(_registration)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<Vehicle> {
+        override fun createFromParcel(parcel: Parcel): Vehicle {
+            return Vehicle(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Vehicle?> {
+            return arrayOfNulls(size)
+        }
     }
 
 }

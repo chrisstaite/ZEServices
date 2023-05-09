@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.android.volley.ClientError;
 import com.android.volley.RequestQueue;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataEvent;
@@ -125,22 +126,32 @@ public class MainActivity extends WearableActivity implements DataClient.OnDataC
                                 accounts -> accounts.get(0).getVehicles(queue).subscribe(
                                         vehicles -> runOnUiThread(() -> {
                                             Intent startIntent = new Intent(this, CarDetails.class);
-                                            startIntent.putExtra("api", api);
+                                            startIntent.putExtra("api", vehicles.get(0));
                                             startIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
                                             startActivity(startIntent);
                                         }),
                                         error -> runOnUiThread(() -> {
-                                            Log.e("LoginActivity", "Unable to authenticate", error);
-                                            loadingText.setText(R.string.login_invalid);
+                                            Log.e("LoginActivity", "Unable to get vehicles", error);
+                                            if (error.getCause() instanceof ClientError &&
+                                                    ((ClientError) error.getCause()).networkResponse.statusCode == 429) {
+                                                loadingText.setText(R.string.rate_limit);
+                                            } else {
+                                                loadingText.setText(R.string.login_invalid);
+                                            }
                                         })
                                 ),
                                 error -> runOnUiThread(() -> {
-                                    Log.e("LoginActivity", "Unable to authenticate", error);
-                                    loadingText.setText(R.string.login_invalid);
+                                    Log.e("LoginActivity", "Unable to get accounts", error);
+                                    if (error.getCause() instanceof ClientError &&
+                                            ((ClientError) error.getCause()).networkResponse.statusCode == 429) {
+                                        loadingText.setText(R.string.rate_limit);
+                                    } else {
+                                        loadingText.setText(R.string.login_invalid);
+                                    }
                                 })
                         ),
                         error -> runOnUiThread(() -> {
-                            Log.e("LoginActivity", "Unable to authenticate", error);
+                            Log.e("LoginActivity", "Unable to get config", error);
                             loadingText.setText(R.string.login_invalid);
                         })
                 )

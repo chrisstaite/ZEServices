@@ -8,14 +8,13 @@ import org.json.JSONArray
 import org.json.JSONObject
 import rx.Observable
 
-class VehicleAccount(api: VehicleApi, accountId: String, country: String) : Parcelable
+class VehicleAccount(private val _api: VehicleApi,
+                     private val _accountId: String,
+                     private val _country: String) : Parcelable
 {
 
-    private val _api = api
-    private val _accountId = accountId
-    private val _country = country
-
-    constructor(parcel: Parcel) : this(VehicleApi(parcel), parcel.readString()!!, parcel.readString()!!)
+    constructor(parcel: Parcel) : this(
+        VehicleApi(parcel), parcel.readString()!!, parcel.readString()!!)
 
     internal fun request(queue: RequestQueue, method: Int, route: String, parameters: JSONObject?): Observable<JSONObject>
     {
